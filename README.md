@@ -2,17 +2,20 @@
 
 A paper-and-pixels desktop dashboard for macOS: **calendar · events · goals · tasks · diary**, plus a card for your own art. Cross-stitch logo, serif body, dot-matrix display, terminal footer. One self-contained HTML file — no build, no accounts, no server, no tracking.
 
-<!-- screenshots: add light/dark side-by-side here -->
+
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/8a9b8f2d-dc2a-45f5-a63f-2258cefb9dbe" />
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/dac2677b-a0dc-48a4-9089-c2847ffa7c4c" />
+
+
 
 ## Features
 
-A bento home grid with a clickable month calendar (click any day to add an event with one-tap time chips), a next-event countdown, a red dot-matrix "up next" display, a live analog clock, mini views of tasks and goals, and quick actions. Sub-pages manage tasks (type to add, click to complete), goals with ASCII progress bars, events with native date/time pickers, and a lined-paper diary with one page per day. Clicking a calendar day opens a composer for both that day's tasks and events. The art card shows any image you drop in — it auto-inverts to match light or dark mode based on the image's polarity. Optional alerts ping you 10 minutes before each event. Keyboard shortcuts: `h t g e a n` to navigate, `d` for dark mode.
+A bento home grid with a clickable month calendar (click any day to add an event with one-tap time chips), a next-event countdown, a red dot-matrix "up next" display, a live analog clock, mini views of tasks and goals, and quick actions. Sub-pages manage tasks (type to add, click to complete), goals with ASCII progress bars, events with native date/time pickers, and a diary with one page per day. Clicking a calendar day opens a composer for both that day's tasks and events. The art card shows any image you drop in — it auto-inverts to match light or dark mode based on the image's polarity. Optional alerts ping you 10 minutes before each event. Keyboard shortcuts: `h t g e a n` to navigate, `d` for dark mode.
 
 All data lives in your browser's localStorage. Nothing leaves your machine. The only network request is Google Fonts.
 
-## Install — pick one
 
-### 1. Plash (true desktop widget, recommended)
+### Easy download using plash
 
 [Plash](https://apps.apple.com/app/plash/id1494023538) (free) pins a web page to your desktop, under all windows.
 
@@ -22,19 +25,9 @@ All data lives in your browser's localStorage. Nothing leaves your machine. The 
 
 Position it by adding a hash to the URL in Plash: `#left`, `#right`, `#center`, with `-top` variants (e.g. `#center-top`). Note: Plash's WebView cannot show native macOS notifications — use the app below if you want alert banners.
 
-### 2. Desk Zone.app (interactive window + notifications)
-
-In `app/`. Move `Desk Zone.app` anywhere, right-click → Open the first time (unsigned). It opens `widget.html` as a chromeless Chrome/Edge/Brave app window. If developer tools (python3) are present it serves over localhost, which enables real macOS notification banners; otherwise you get in-window toasts.
-
-### 3. Übersicht (display only)
-
-In `ubersicht/`. Drop `desk-zone.widget` into Übersicht's widgets folder. macOS desktop widgets never receive keyboard focus, so treat this one as glanceable decor.
-
-Or just open `widget.html` in any browser.
-
 ## Files
 
-`widget.html` is the full app (open it anywhere). `index.html` is the same file defaulting to widget mode: transparent around the card, pinned right — what Plash loads.
+ `index.html` is what Plash loads.
 
 ## Privacy & security notes
 
