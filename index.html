@@ -1,0 +1,1319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Desk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jacquard+12&family=VT323&family=Doto:wght@700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#e9e6dd;
+    --card:#f7f5ef;
+    --ink:#2b2924;
+    --ink-soft:#2b2924;
+    --muted:#2b2924;
+    --line:#d6d2c4;
+    --line-dark:#bbb6a6;
+    --terminal:#262521;
+    --terminal-ink:#d9d6cc;
+    --done:#a39e8f;
+    --shadow:rgba(43,41,36,.16);
+    --amber:#c63a2f;          /* accent (red) */
+    --display:#1d1c19;
+    color-scheme:light;
+  }
+  body.dark{
+    --paper:#131210;
+    --card:#23211c;
+    --ink:#f2efe3;
+    --ink-soft:#f2efe3;
+    --muted:#f2efe3;
+    --line:#3d3b33;
+    --line-dark:#5b574b;
+    --terminal:#0b0a08;
+    --terminal-ink:#e8e5da;
+    --done:#7c7868;
+    --shadow:rgba(0,0,0,.65);
+    --display:#0d0c0a;
+    --amber:#ff5547;
+    color-scheme:dark;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--paper)}
+  body{
+    font-family:'Times New Roman',Times,Georgia,serif;
+    color:var(--ink);
+    display:flex;justify-content:center;align-items:flex-start;
+    padding:24px 16px;
+    transition:background .25s;
+  }
+  .widget{
+    width:820px;
+    background:var(--paper);
+    border:1px solid var(--ink);
+    border-radius:14px;
+    box-shadow:6px 6px 0 var(--shadow);
+    display:flex;flex-direction:column;
+    overflow:hidden;
+    position:relative;
+    transition:background .25s,border-color .25s;
+  }
+
+  /* ── header ─────────────────────────── */
+  header{
+    display:flex;align-items:flex-end;justify-content:space-between;
+    padding:14px 20px 11px;
+    border-bottom:1px solid var(--ink);
+    background:var(--card);
+  }
+  .title{font-family:'Jacquard 12',serif;font-size:42px;line-height:.85;letter-spacing:1px;cursor:pointer}
+  .title small{
+    display:block;font-family:'Times New Roman',serif;font-style:italic;
+    font-size:11px;letter-spacing:1.5px;color:var(--muted);margin-top:6px;
+  }
+  .header-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+  .header-meta{font-family:'VT323',monospace;font-size:15px;color:var(--ink-soft)}
+  .mode-toggle{
+    font-family:'VT323',monospace;font-size:14px;color:var(--muted);
+    border:1px solid var(--line-dark);border-radius:6px;
+    background:transparent;cursor:pointer;padding:1px 9px;letter-spacing:1px;
+  }
+  .mode-toggle:hover{color:var(--ink);border-color:var(--ink)}
+
+  /* ── views ──────────────────────────── */
+  .view{display:none;flex:1}
+  .view.active{display:flex}
+
+  /* ── bento home ─────────────────────── */
+  #view-home.active{
+    display:grid;
+    grid-template-columns:250px 1fr 1fr;
+    grid-auto-rows:min-content;
+    gap:12px;padding:16px;
+  }
+  .bcard{
+    background:var(--card);
+    border:1px solid var(--line-dark);
+    border-radius:12px;
+    padding:13px 15px;
+    box-shadow:3px 3px 0 var(--shadow);
+    transition:transform .12s, box-shadow .12s, background .25s;
+    position:relative;
+  }
+  .bcard.link{cursor:pointer}
+  .bcard.link:hover{transform:translate(-1px,-1px);box-shadow:5px 5px 0 var(--shadow)}
+  .bcard h3{
+    font-size:10.5px;font-weight:normal;font-style:italic;
+    letter-spacing:1.5px;color:var(--muted);margin-bottom:7px;
+  }
+  .bcard .go{
+    position:absolute;top:11px;right:13px;
+    font-family:'VT323',monospace;font-size:15px;color:var(--line-dark);
+  }
+  .bcard.link:hover .go{color:var(--ink)}
+
+  #card-cal{grid-row:span 2}
+
+  /* calendar */
+  .cal-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:7px}
+  .cal-head .mo{font-size:16px;letter-spacing:2.5px;cursor:pointer}
+  .cal-nav{font-size:15px;padding:0 7px}
+  .cal-head .yr{font-style:italic;color:var(--muted);font-size:12.5px}
+  table.cal{width:100%;border-collapse:collapse;table-layout:fixed}
+  .cal th{font-weight:normal;font-style:italic;color:var(--muted);font-size:10px;padding:1px 0 5px}
+  .cal td{text-align:center;height:26px;font-size:12.5px;color:var(--ink-soft);position:relative}
+  .cal td:not(.dim){cursor:pointer}
+  .cal td:not(.dim) span{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:21px;height:21px;border-radius:5px;
+  }
+  .cal td:not(.dim):hover span{background:var(--line);outline:1px solid var(--line-dark)}
+  .cal td.dim{color:var(--line-dark)}
+  .cal td.today span{
+    background:var(--ink);color:var(--card);
+  }
+  .cal td.has-evt::after{
+    content:"";position:absolute;left:50%;bottom:2px;
+    width:3px;height:3px;margin-left:-1.5px;border-radius:50%;background:var(--amber);
+  }
+  .cal-appts{margin-top:10px;padding-top:8px;border-top:1px dotted var(--line-dark)}
+  .cal-appts h3{
+    font-size:10.5px;font-weight:normal;font-style:italic;
+    letter-spacing:1.5px;margin-bottom:5px;
+  }
+  .today-strip{margin-top:9px;padding-top:9px;border-top:1px dotted var(--line-dark)}
+  .today-strip h3{
+    font-size:10.5px;font-weight:normal;font-style:italic;
+    letter-spacing:1.5px;color:var(--muted);margin-bottom:6px;
+  }
+  .today-strip .evt-row{display:flex;gap:10px;align-items:baseline;font-size:12.5px;padding:2px 0}
+  .today-strip .evt-when{font-family:'VT323',monospace;font-size:14px;color:var(--muted);min-width:62px}
+  .today-strip .empty{font-style:italic;color:var(--muted);font-size:12px}
+
+  /* art card */
+  #card-art img{
+    display:block;width:100%;height:158px;
+    object-fit:contain;border-radius:8px;
+    transition:filter .25s;
+  }
+  img.inv{filter:invert(1)}
+
+  /* countdown card */
+  .count-big{font-size:46px;line-height:1;margin:4px 0 2px}
+  .count-big small{font-size:15px;font-style:italic;color:var(--muted);margin-left:4px}
+  .count-sub{font-size:12.5px;color:var(--ink-soft)}
+  .count-sub b{font-weight:normal;font-family:'VT323',monospace;font-size:14px;color:var(--muted)}
+
+  /* dot-matrix card */
+  .display{
+    background:var(--display);
+    border-radius:8px;
+    padding:10px 12px 8px;
+    box-shadow:inset 0 2px 6px rgba(0,0,0,.55);
+    overflow:hidden;
+  }
+  .display .row1,.display .row2{
+    font-family:'Doto','VT323',monospace;font-weight:900;
+    color:var(--amber);
+    white-space:nowrap;letter-spacing:2px;
+  }
+  .display .row1{font-size:26px;line-height:1.05}
+  .display .row2{font-size:18px;line-height:1.2;opacity:.85}
+
+  /* tasks mini */
+  .mini-task{display:flex;gap:8px;align-items:baseline;font-size:12.5px;padding:2.5px 0}
+  .mini-task .bx{font-family:'VT323',monospace;font-size:14px;color:var(--ink-soft)}
+  .mini-more{font-style:italic;font-size:11.5px;color:var(--muted);margin-top:4px}
+
+  /* clock card */
+  #card-clock{display:flex;gap:14px;align-items:center}
+  .clock-svg{flex:none}
+  .clock-digits{font-family:'VT323',monospace;font-size:20px;line-height:1;color:var(--ink-soft)}
+  .clock-sub{font-size:11px;font-style:italic;color:var(--muted);margin-top:4px}
+
+  /* goals mini */
+  .mini-goal{padding:3px 0;font-size:12px}
+  .mini-goal .gtop{display:flex;justify-content:space-between;margin-bottom:1px}
+  .mini-goal .gpct{font-family:'VT323',monospace;font-size:13px;color:var(--muted)}
+  .mini-bar{font-family:'VT323',monospace;font-size:12px;letter-spacing:1px;color:var(--ink);line-height:1}
+  .mini-bar .off{color:var(--line-dark)}
+
+  /* quick actions card */
+  .side-action{
+    display:block;width:100%;text-align:left;
+    background:transparent;border:1px solid var(--line-dark);border-radius:7px;
+    font-family:'Times New Roman',serif;font-size:12.5px;color:var(--ink-soft);
+    padding:4.5px 9px;margin-bottom:5px;cursor:pointer;
+  }
+  .side-action:last-child{margin-bottom:0}
+  .side-action:hover{color:var(--ink);border-color:var(--ink);box-shadow:2px 2px 0 var(--shadow)}
+  .side-action .pfx{font-family:'VT323',monospace;color:var(--muted);margin-right:6px}
+
+  /* ── sub-pages ──────────────────────── */
+  .page{flex-direction:column;padding:18px 26px 20px;width:100%}
+  .back{
+    align-self:flex-start;font-size:13px;color:var(--muted);cursor:pointer;
+    margin-bottom:10px;background:none;border:none;font-family:'Times New Roman',serif;
+  }
+  .back:hover{color:var(--ink)}
+  .page h2{
+    font-size:26px;font-weight:normal;letter-spacing:1px;
+    border-bottom:1px solid var(--ink);padding-bottom:8px;margin-bottom:6px;
+  }
+  .page h2 em{font-size:13px;color:var(--muted);letter-spacing:0;margin-left:10px}
+  .page-list{flex:1;overflow-y:auto;min-height:0;max-height:340px;padding-top:6px}
+  .page-list::-webkit-scrollbar{width:4px}
+  .page-list::-webkit-scrollbar-thumb{background:var(--line-dark)}
+
+  .task{display:flex;gap:11px;align-items:baseline;padding:8px 2px;cursor:pointer;user-select:none;border-bottom:1px dotted var(--line)}
+  .task-box{font-family:'VT323',monospace;font-size:17px;color:var(--ink-soft);flex:none}
+  .task-text{font-size:15px;flex:1}
+  .task.done .task-text{color:var(--done);text-decoration:line-through}
+  .task.done .task-box{color:var(--done)}
+  .task-x{font-family:'VT323',monospace;font-size:16px;color:transparent;padding:0 3px;cursor:pointer}
+  .task:hover .task-x,.goal:hover .task-x,.evt:hover .task-x{color:var(--muted)}
+  .task-x:hover{color:var(--ink)!important}
+
+  .goal{padding:10px 2px;border-bottom:1px dotted var(--line)}
+  .goal-top{display:flex;justify-content:space-between;align-items:baseline;font-size:15px;margin-bottom:5px}
+  .goal-ctl{display:flex;gap:6px;align-items:baseline}
+  .goal-pct{font-family:'VT323',monospace;font-size:16px;color:var(--muted);min-width:38px;text-align:right}
+  .goal-btn{
+    font-family:'VT323',monospace;font-size:15px;border:1px solid var(--line-dark);border-radius:5px;
+    background:transparent;color:var(--muted);cursor:pointer;width:22px;
+  }
+  .goal-btn:hover{color:var(--ink);border-color:var(--ink)}
+  .goal-bar{font-family:'VT323',monospace;font-size:15px;letter-spacing:1px;color:var(--ink);line-height:1}
+  .goal-bar .off{color:var(--line-dark)}
+
+  .evt{display:flex;gap:14px;align-items:baseline;padding:8px 2px;border-bottom:1px dotted var(--line);font-size:15px}
+  .evt-when{font-family:'VT323',monospace;font-size:16px;color:var(--muted);min-width:118px;flex:none}
+  .evt-name{flex:1}
+  .evt-tag{
+    font-size:10px;color:var(--muted);border:1px solid var(--line-dark);border-radius:4px;
+    padding:0 5px;margin-left:8px;vertical-align:2px;letter-spacing:1px;font-family:'VT323',monospace;
+  }
+
+  .add-row{display:flex;gap:10px;align-items:center;border-top:1px solid var(--line-dark);padding-top:12px;margin-top:12px}
+  .add-row .prompt{font-family:'VT323',monospace;font-size:17px;color:var(--muted)}
+  .add-row input{border:none;background:transparent;outline:none;font-family:'Times New Roman',serif;font-size:15px;color:var(--ink)}
+  .add-row input::placeholder{color:var(--line-dark);font-style:italic}
+  .add-row input.grow{flex:1}
+  .add-row .hint{font-size:11px;font-style:italic;color:var(--line-dark)}
+  .add-row input[type="date"],.add-row input[type="time"]{
+    font-family:'VT323',monospace;font-size:15px;color:var(--ink);
+    background:transparent;border:1px solid var(--line-dark);border-radius:6px;
+    padding:2px 7px;outline:none;
+  }
+
+  /* art page */
+  .art-wrap{display:grid;grid-template-columns:1fr 1fr;gap:18px;flex:1;padding-top:10px}
+  .art-preview{
+    background:var(--card);border:1px solid var(--line-dark);border-radius:10px;
+    box-shadow:3px 3px 0 var(--shadow);
+    display:flex;align-items:center;justify-content:center;overflow:hidden;
+    min-height:280px;
+  }
+  .art-preview img{
+    display:block;max-width:100%;max-height:300px;object-fit:contain;
+    transition:filter .25s;
+  }
+  .art-edit{display:flex;flex-direction:column;gap:10px}
+  .art-drop{
+    flex:1;min-height:180px;
+    border:1.5px dashed var(--line-dark);border-radius:10px;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+    font-size:15px;color:var(--ink-soft);cursor:pointer;text-align:center;
+  }
+  .art-drop span{font-size:12px;font-style:italic;color:var(--muted)}
+  .art-drop:hover,.art-drop.over{border-color:var(--ink);color:var(--ink);box-shadow:3px 3px 0 var(--shadow)}
+  .art-btns{display:flex;gap:8px}
+  .art-btn{
+    font-family:'Times New Roman',serif;font-size:12.5px;color:var(--ink-soft);
+    border:1px solid var(--line-dark);border-radius:7px;background:transparent;
+    padding:5px 12px;cursor:pointer;
+  }
+  .art-btn:hover{color:var(--ink);border-color:var(--ink);box-shadow:2px 2px 0 var(--shadow)}
+  .art-note{font-size:11px;font-style:italic;color:var(--muted)}
+
+  /* today card */
+  #card-today{grid-column:2/4;grid-row:2/4;display:flex;flex-direction:column}
+  .th{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:8px;padding-bottom:8px;border-bottom:1px dotted var(--line-dark)}
+  .th h3{margin:0}
+  .th-date{font-family:'VT323',monospace;font-size:15px;color:var(--muted);margin-right:auto}
+  .display.slim{display:flex;gap:10px;align-items:baseline;padding:5px 12px 4px;flex:none}
+  .display.slim .row1{font-size:19px}
+  .display.slim .row2{font-size:13px}
+  .today-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 18px;flex:1;min-height:0}
+  .tg-col{display:flex;flex-direction:column;min-height:0}
+  .today-grid .tg-col:last-child{border-left:1px dotted var(--line-dark);padding-left:16px}
+  .tg-label{
+    font-size:10.5px;font-weight:normal;font-style:italic;letter-spacing:1.5px;color:var(--muted);
+    margin-bottom:4px;display:flex;justify-content:space-between;align-items:baseline;
+  }
+  .tg-add{font-family:'VT323',monospace;font-size:14px;font-style:normal;cursor:pointer;letter-spacing:0}
+  .tg-add:hover{color:var(--ink)}
+  .tg-list{flex:1;overflow-y:auto;min-height:0;max-height:150px}
+  .tg-list::-webkit-scrollbar{width:3px}
+  .tg-list::-webkit-scrollbar-thumb{background:var(--line-dark)}
+  .trow{display:flex;gap:10px;align-items:baseline;font-size:12.5px;padding:2.5px 0}
+  .trow .when{font-family:'VT323',monospace;font-size:14px;color:var(--muted);min-width:64px;flex:none}
+  .trow.next .when{color:var(--amber)}
+  .trow.next .nm::after{content:" ◂";color:var(--amber)}
+  .t-row{display:flex;gap:8px;align-items:baseline;font-size:12.5px;padding:2.5px 0;cursor:pointer;user-select:none}
+  .t-row .bx{font-family:'VT323',monospace;font-size:14px;color:var(--ink-soft);flex:none}
+  .t-row .tx{flex:1}
+  .t-row.done .tx,.t-row.done .bx{color:var(--done)}
+  .t-row.done .tx{text-decoration:line-through}
+  .t-row .task-x{font-size:14px;padding:0 2px}
+  .t-row:hover .task-x{color:var(--muted)}
+  .t-sub{font-size:11px;font-style:italic;color:var(--muted);margin-top:4px}
+  .t-add{display:flex;gap:8px;align-items:center;border-top:1px dotted var(--line-dark);padding-top:6px;margin-top:6px}
+  .t-add .prompt{font-family:'VT323',monospace;font-size:15px;color:var(--muted)}
+  .t-add input{
+    flex:1;border:none;background:transparent;outline:none;
+    font-family:'Times New Roman',serif;font-size:12.5px;color:var(--ink);
+  }
+  .t-add input::placeholder{color:var(--line-dark);font-style:italic}
+  .today-diary{border-top:1px dotted var(--line-dark);margin-top:8px;padding-top:8px;cursor:pointer}
+  .today-diary:hover .diary-preview{color:var(--ink)}
+  .empty-line{font-size:12px;font-style:italic;color:var(--muted)}
+
+  /* diary */
+  .diary-preview{
+    font-size:13px;font-style:italic;color:var(--ink-soft);
+    line-height:24px;max-height:24px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;
+  }
+  .diary-preview .dp-date{font-family:'VT323',monospace;font-style:normal;font-size:14px;color:var(--muted);margin-right:12px}
+  .diary-preview i{color:var(--muted)}
+  .diary-nav{display:flex;gap:10px;align-items:baseline;margin:6px 0 12px}
+  .dn-btn{
+    font-family:'VT323',monospace;font-size:18px;border:1px solid var(--line-dark);border-radius:6px;
+    background:transparent;color:var(--muted);cursor:pointer;padding:0 10px;
+  }
+  .dn-btn:hover{color:var(--ink);border-color:var(--ink)}
+  .dn-date{font-size:17px;letter-spacing:1px}
+  .dn-today{font-size:12px;font-style:italic;color:var(--muted);cursor:pointer;background:none;border:none;font-family:'Times New Roman',serif}
+  .dn-today:hover{color:var(--ink)}
+  .diary-wrap{position:relative;flex:1;display:flex;min-height:0}
+  textarea.diary-paper{
+    flex:1;resize:none;outline:none;
+    border:1px solid var(--ink);border-radius:10px;
+    box-shadow:4px 4px 0 var(--shadow);
+    background-color:var(--card);
+    line-height:1.75;font-family:'Times New Roman',Times,serif;font-size:16px;color:var(--ink);
+    padding:20px 24px;min-height:300px;
+  }
+  textarea.diary-paper::placeholder{color:var(--line-dark);font-style:italic}
+
+  /* ── day modal ──────────────────────── */
+  .overlay{
+    position:absolute;inset:0;z-index:20;
+    background:rgba(20,19,16,.45);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .overlay[hidden]{display:none}
+  .modal{
+    width:340px;max-height:88%;overflow-y:auto;
+    background:var(--card);
+    border:1px solid var(--ink);border-radius:12px;
+    box-shadow:5px 5px 0 var(--shadow);
+    padding:16px 18px;
+  }
+  .modal-head{
+    display:flex;justify-content:space-between;align-items:baseline;
+    border-bottom:1px solid var(--ink);
+    padding-bottom:8px;margin-bottom:10px;
+  }
+  .modal-head .md{font-size:19px;letter-spacing:1px}
+  .modal-x{
+    background:none;border:none;cursor:pointer;
+    font-family:'VT323',monospace;font-size:20px;color:var(--muted);
+  }
+  .modal-x:hover{color:var(--ink)}
+  .modal-label{
+    font-size:10.5px;font-style:italic;letter-spacing:1.5px;
+    color:var(--muted);margin:10px 0 6px;
+  }
+  .modal .day-evt{
+    display:flex;gap:10px;align-items:baseline;font-size:13.5px;
+    padding:3px 0;border-bottom:1px dotted var(--line);
+  }
+  .modal .day-evt .evt-when{min-width:64px;font-size:15px}
+  .modal .day-evt .nm{flex:1}
+  .modal .day-empty{font-size:12px;font-style:italic;color:var(--muted)}
+  .modal .mini-add{display:flex;gap:8px;align-items:center;margin-top:6px}
+  .modal .mini-add .prompt{font-family:'VT323',monospace;font-size:16px;color:var(--muted)}
+  .modal .mini-add input{
+    flex:1;border:none;border-bottom:1px dotted var(--line-dark);background:transparent;outline:none;
+    font-family:'Times New Roman',serif;font-size:13.5px;color:var(--ink);padding:2px 1px;
+  }
+  .chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+  .chip{
+    font-family:'VT323',monospace;font-size:15px;
+    border:1px solid var(--line-dark);border-radius:6px;
+    background:transparent;color:var(--ink-soft);
+    padding:2px 9px;cursor:pointer;
+  }
+  .chip:hover{border-color:var(--ink);color:var(--ink)}
+  .chip.sel{background:var(--ink);color:var(--card);border-color:var(--ink)}
+  .modal input[type="time"]{
+    font-family:'VT323',monospace;font-size:15px;color:var(--ink);
+    background:transparent;border:1px solid var(--line-dark);border-radius:6px;
+    padding:2px 7px;outline:none;
+  }
+  .modal input[type="text"]{
+    width:100%;border:none;border-bottom:1px solid var(--line-dark);
+    background:transparent;outline:none;
+    font-family:'Times New Roman',serif;font-size:15px;color:var(--ink);
+    padding:4px 1px;
+  }
+  .modal input[type="text"]:focus{border-bottom-color:var(--ink)}
+  .modal input::placeholder{color:var(--line-dark);font-style:italic}
+  .modal-save{
+    margin-top:14px;width:100%;
+    background:var(--ink);color:var(--card);
+    border:1px solid var(--ink);border-radius:8px;
+    font-family:'Times New Roman',serif;font-size:14px;
+    padding:7px 0;cursor:pointer;letter-spacing:.5px;
+  }
+  .modal-save:hover{box-shadow:3px 3px 0 var(--shadow)}
+
+  /* ── toasts ─────────────────────────── */
+  .toast-wrap{
+    position:absolute;right:14px;bottom:38px;z-index:30;
+    display:flex;flex-direction:column;gap:8px;align-items:flex-end;
+    pointer-events:none;
+  }
+  .toast{
+    background:var(--card);
+    border:1px solid var(--ink);border-left:4px solid var(--amber);
+    border-radius:9px;
+    box-shadow:4px 4px 0 var(--shadow);
+    padding:8px 14px;max-width:280px;
+    animation:toastin .2s ease-out;
+  }
+  .toast .tt{font-size:13.5px}
+  .toast .tb{font-family:'VT323',monospace;font-size:14px;color:var(--muted)}
+  @keyframes toastin{from{transform:translateY(8px);opacity:0}to{transform:none;opacity:1}}
+
+  /* ── footer ─────────────────────────── */
+  footer{
+    background:var(--terminal);color:var(--terminal-ink);
+    font-family:'VT323',monospace;font-size:14px;
+    padding:5px 16px;display:flex;justify-content:space-between;gap:12px;letter-spacing:.5px;
+  }
+  footer .dim{opacity:.8}
+  .cursor{display:inline-block;width:7px;height:12px;background:var(--terminal-ink);
+    vertical-align:-1px;animation:blink 1.1s steps(1) infinite}
+  @keyframes blink{50%{opacity:0}}
+</style>
+</head>
+<body>
+<div class="widget">
+
+  <header>
+    <div class="title" onclick="go('home')">Desk<small>calendar &middot; events &middot; goals &middot; tasks</small></div>
+    <div class="header-right">
+      <div style="display:flex;gap:6px">
+        <button class="mode-toggle" id="bell-toggle" title="event notifications">alerts off</button>
+        <button class="mode-toggle" id="mode-toggle">dark</button>
+      </div>
+      <div class="header-meta" id="hdr-date">—</div>
+    </div>
+  </header>
+
+  <!-- ════════ HOME (bento) ════════ -->
+  <div class="view active" id="view-home">
+
+    <div class="bcard" id="card-cal">
+      <div class="cal-head">
+        <span class="mo" id="cal-month" title="back to this month">—</span>
+        <span style="display:flex;gap:5px;align-items:baseline">
+          <span class="yr" id="cal-year">—</span>
+          <button class="dn-btn cal-nav" id="cal-prev" title="previous month">&lsaquo;</button>
+          <button class="dn-btn cal-nav" id="cal-next" title="next month">&rsaquo;</button>
+        </span>
+      </div>
+      <table class="cal">
+        <thead><tr><th>M</th><th>T</th><th>W</th><th>T</th><th>F</th><th>S</th><th>S</th></tr></thead>
+        <tbody id="cal-body"></tbody>
+      </table>
+      <div class="cal-appts">
+        <h3>Appointments</h3>
+        <div id="cal-appts"></div>
+      </div>
+    </div>
+
+    <div class="bcard link" id="card-art" onclick="go('art')">
+      <h3>Art</h3><span class="go">&#8599;</span>
+      <img id="art-home" alt="your art">
+    </div>
+
+    <div class="bcard link" onclick="go('goals')">
+      <h3>Goals</h3><span class="go">&#8599;</span>
+      <div id="mini-goals"></div>
+      <div class="t-sub" id="goals-avg"></div>
+    </div>
+
+    <div class="bcard" id="card-today">
+      <div class="th">
+        <h3>Today</h3>
+        <span class="th-date" id="today-date">—</span>
+        <div class="display slim">
+          <span class="row1" id="dm-1">--:--</span>
+          <span class="row2" id="dm-2">ALL CLEAR</span>
+        </div>
+      </div>
+      <div class="today-grid">
+        <div class="tg-col">
+          <div class="tg-label"><span>Events</span><span class="tg-add" id="today-add-evt" title="add an event today">+ add</span></div>
+          <div class="tg-list" id="today-evts"></div>
+          <div class="t-sub" id="today-count"></div>
+        </div>
+        <div class="tg-col">
+          <div class="tg-label"><span>Tasks</span><span class="tg-add" onclick="go('tasks')" title="all tasks">all &#8599;</span></div>
+          <div class="tg-list" id="today-tasks"></div>
+          <div class="t-add"><span class="prompt">&gt;</span><input id="today-task-input" type="text" placeholder="add a task for today&hellip;" autocomplete="off"></div>
+        </div>
+      </div>
+      <div class="today-diary" onclick="openDiaryToday()" title="open the diary">
+        <div class="diary-preview" id="diary-home"></div>
+      </div>
+    </div>
+
+    <div class="bcard" id="card-clock">
+      <svg class="clock-svg" id="clock" width="74" height="74" viewBox="0 0 74 74">
+        <circle cx="37" cy="37" r="34" fill="none" stroke="var(--line-dark)" stroke-width="1.5"/>
+        <g id="ticks" stroke="var(--line-dark)" stroke-width="1.5"></g>
+        <line id="h-hand" x1="37" y1="37" x2="37" y2="21" stroke="var(--ink)" stroke-width="3" stroke-linecap="round"/>
+        <line id="m-hand" x1="37" y1="37" x2="37" y2="13" stroke="var(--ink)" stroke-width="2" stroke-linecap="round"/>
+        <line id="s-hand" x1="37" y1="40" x2="37" y2="11" stroke="var(--amber)" stroke-width="1"/>
+        <circle cx="37" cy="37" r="2" fill="var(--ink)"/>
+      </svg>
+      <div>
+        <div class="clock-digits" id="clock-digits">--:--:--</div>
+        <div class="clock-sub">local time</div>
+        <div class="mini-bar" id="year-line" style="margin-top:9px"></div>
+        <div class="clock-sub" id="week-line"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ════════ TASKS ════════ -->
+  <div class="view page" id="view-tasks">
+    <button class="back" onclick="go('home')">&larr; Desk</button>
+    <h2>Tasks<em id="tasks-sub"></em></h2>
+    <div class="page-list" id="task-list"></div>
+    <div class="add-row">
+      <span class="prompt">&gt;</span>
+      <input class="grow" id="task-input" type="text" placeholder="add a task, press return&hellip;" autocomplete="off">
+    </div>
+  </div>
+
+  <!-- ════════ GOALS ════════ -->
+  <div class="view page" id="view-goals">
+    <button class="back" onclick="go('home')">&larr; Desk</button>
+    <h2>Goals<em>click &minus; / + to update progress</em></h2>
+    <div class="page-list" id="goal-list"></div>
+    <div class="add-row">
+      <span class="prompt">&gt;</span>
+      <input class="grow" id="goal-input" type="text" placeholder="add a goal, press return&hellip;" autocomplete="off">
+    </div>
+  </div>
+
+  <!-- ════════ EVENTS ════════ -->
+  <div class="view page" id="view-events">
+    <button class="back" onclick="go('home')">&larr; Desk</button>
+    <h2>Events<em>upcoming, soonest first</em></h2>
+    <div class="page-list" id="evt-list"></div>
+    <div class="add-row">
+      <span class="prompt">&gt;</span>
+      <input type="date" id="evt-date">
+      <input type="time" id="evt-time" value="09:00">
+      <input class="grow" id="evt-name" type="text" placeholder="event name, press return&hellip;" autocomplete="off">
+      <span class="hint">tip: click any calendar day</span>
+    </div>
+  </div>
+
+  <!-- ════════ ART ════════ -->
+  <div class="view page" id="view-art">
+    <button class="back" onclick="go('home')">&larr; Desk</button>
+    <h2>Art<em>upload any image you like</em></h2>
+    <div class="art-wrap">
+      <div class="art-preview"><img id="art-preview" alt="preview"></div>
+      <div class="art-edit">
+        <div class="art-drop" id="art-drop">drop an image here<span>or click to browse &middot; or paste (&#8984;V)</span></div>
+        <div class="art-btns">
+          <button class="art-btn" id="art-reset">reset to default</button>
+          <input type="file" id="art-file" accept="image/*" style="display:none">
+        </div>
+        <div class="art-note">stored locally &middot; shows on your home card &middot; auto-inverts to match the theme</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════ DIARY ════════ -->
+  <div class="view page" id="view-diary">
+    <button class="back" onclick="go('home')">&larr; Desk</button>
+    <h2>Diary<em id="diary-sub"></em></h2>
+    <div class="diary-nav">
+      <button class="dn-btn" id="diary-prev" title="previous day">&lsaquo;</button>
+      <span class="dn-date" id="diary-date">—</span>
+      <button class="dn-btn" id="diary-next" title="next day">&rsaquo;</button>
+      <button class="dn-today" id="diary-today">jump to today</button>
+    </div>
+    <div class="diary-wrap">
+      <textarea class="diary-paper" id="diary-text" placeholder="dear diary&hellip;" spellcheck="false"></textarea>
+    </div>
+  </div>
+
+  <!-- ════════ DAY MODAL ════════ -->
+  <div class="overlay" id="overlay" hidden>
+    <div class="modal">
+      <div class="modal-head">
+        <span class="md" id="modal-date">—</span>
+        <button class="modal-x" id="modal-close">&times;</button>
+      </div>
+      <div class="modal-label">Tasks this day</div>
+      <div id="modal-day-tasks"></div>
+      <div class="mini-add"><span class="prompt">&gt;</span><input id="modal-task-input" type="text" placeholder="add a task for this day&hellip;" autocomplete="off"></div>
+      <div class="modal-label">Events this day</div>
+      <div id="modal-day-events"></div>
+      <div class="modal-label">Pick a time</div>
+      <div class="chips" id="time-chips"></div>
+      <div class="modal-label">Event</div>
+      <input type="text" id="modal-name" placeholder="what's happening&hellip;" autocomplete="off">
+      <button class="modal-save" id="modal-save">add event</button>
+    </div>
+  </div>
+
+  <div class="toast-wrap" id="toasts"></div>
+
+  <footer>
+    <span>you@desk <span class="dim">~/</span><span id="foot-path">home</span> <span class="cursor"></span></span>
+    <span id="foot-status" class="dim">—</span>
+  </footer>
+
+</div>
+
+<script>
+/* ── default art (embedded svg) ────────────────────── */
+const DEFAULT_ART_IMG = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MDAgNTAwIj48cmVjdCB3aWR0aD0iNTAwIiBoZWlnaHQ9IjUwMCIgZmlsbD0iIzAwMCIvPjxwb2x5bGluZSBwb2ludHM9IjE5NywyNTYgMTk4LDI2NSAxOTYsMjY0IDE4OCwyNjUgMTc4LDI2NSAxODgsMjY3IDE4MiwyNzUgMTgxLDI3OSAxNzUsMjY5IiBmaWxsPSJub25lIiBzdHJva2U9IiNjZmNmY2YiIHN0cm9rZS1vcGFjaXR5PSIwLjUyIiBzdHJva2Utd2lkdGg9IjAuOSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PHBvbHlsaW5lIHBvaW50cz0iMTU3LDI4MyAxNDIsMjc2IDEzNSwyODEgMTI5LDI4NCAxMTUsMjc0IDExMywyNzcgOTYsMjgyIDk2LDI4NCA4MiwzMDIiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2NmY2ZjZiIgc3Ryb2tlLW9wYWNpdHk9IjAuODEiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48cG9seWxpbmUgcG9pbnRzPSIyOTYsMjg4IDI5OCwyODEgMzA1LDI4OSAzMDEsMjkzIDMwMywyOTUgMzA5LDI5NCAzMTAsMjk2IDMxOCwzMTIgMzE4LDMwNyIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjY2ZjZmNmIiBzdHJva2Utb3BhY2l0eT0iMC41OSIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxwb2x5bGluZSBwb2ludHM9IjMyOSwzMTcgMzQ0LDMxNiAzNDIsMzIyIDMzNCwzMzcgMzQyLDMyOSAzNDYsMzM4IDM1OSwzMzIgMzc1LDMzMCAzNzIsMzM0IiBmaWxsPSJub25lIiBzdHJva2U9IiNjZmNmY2YiIHN0cm9rZS1vcGFjaXR5PSIwLjc4IiBzdHJva2Utd2lkdGg9IjEuNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PHBvbHlsaW5lIHBvaW50cz0iMjIxLDI4NiAyMjYsMjkyIDIxMywzMDMgMjE2LDMxNSAyMTQsMzE4IDIwMywzMjYgMTk3LDMyNSAyMDgsMzQyIDIwMywzNDgiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2NmY2ZjZiIgc3Ryb2tlLW9wYWNpdHk9IjAuODUiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48cG9seWxpbmUgcG9pbnRzPSIxOTAsMzUzIDE4NywzNjAgMTg0LDM3OCAxNzIsMzgyIDE4MCwzODkgMTcwLDQwMiAxNTksNDAwIDE1OSw0MTEgMTQzLDQyNyIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjY2ZjZmNmIiBzdHJva2Utb3BhY2l0eT0iMC42OSIgc3Ryb2tlLXdpZHRoPSIxLjMiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxwb2x5bGluZSBwb2ludHM9IjIzNywyOTUgMjMyLDI5MyAyMjksMzAxIDIzMSwzMTAgMjIyLDMxOCAyMjAsMzI2IDIyOSwzMzEgMjI2LDM0NSAyMTMsMzQ4IiBmaWxsPSJub25lIiBzdHJva2U9IiNjZmNmY2YiIHN0cm9rZS1vcGFjaXR5PSIwLjU0IiBzdHJva2Utd2lkdGg9IjEuMSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PHBvbHlsaW5lIHBvaW50cz0iMjA5LDM3NSAyMTQsMzc1IDIxMCwzODAgMjAwLDM5MSAyMDMsNDAwIDIwNSw0MTMgMjA1LDQxMiAxOTcsNDI2IDE5MCw0MzIiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2NmY2ZjZiIgc3Ryb2tlLW9wYWNpdHk9IjAuNjUiIHN0cm9rZS13aWR0aD0iMS4wIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48cG9seWxpbmUgcG9pbnRzPSIyMTksMjMyIDIxNiwyMjcgMjEwLDIzMCAxOTksMjE2IDE4OCwyMTAgMTg0LDIxMSAxNjksMjExIDE2MiwyMDMgMTUwLDE5NiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjY2ZjZmNmIiBzdHJva2Utb3BhY2l0eT0iMC43NCIgc3Ryb2tlLXdpZHRoPSIwLjgiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxwb2x5bGluZSBwb2ludHM9IjE0MywxOTIgMTQ1LDE3MyAxMzUsMTc4IDEyNiwxNzUgMTA0LDE3OCAxMDEsMTY3IDkzLDE2NCA4NSwxNDYgNzMsMTQ3IiBmaWxsPSJub25lIiBzdHJva2U9IiNjZmNmY2YiIHN0cm9rZS1vcGFjaXR5PSIwLjc5IiBzdHJva2Utd2lkdGg9IjEuNiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PHBvbHlsaW5lIHBvaW50cz0iMjAyLDIxNSAxOTAsMjI0IDE5NiwyMjAgMTgzLDIyMSAxODUsMjE2IDE3MywyMTMgMTgwLDIwNSAxNzAsMjA1IDE3MywyMDkiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2NmY2ZjZiIgc3Ryb2tlLW9wYWNpdHk9IjAuNzgiIHN0cm9rZS13aWR0aD0iMC45IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48cG9seWxpbmUgcG9pbnRzPSIxNjEsMTk4IDE0OCwxOTcgMTIzLDE5NiAxMjEsMTg2IDk3LDE4MyA5NiwxNTYgNzMsMTYxIDY1LDE1NiA1OCwxNDEiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2NmY2ZjZiIgc3Ryb2tlLW9wYWNpdHk9IjAuNTUiIHN0cm9rZS13aWR0aD0iMC45IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48cG9seWxpbmUgcG9pbnRzPSIyMjMsMjk1IDIyMCwyOTggMjIzLDMwOSAyMTcsMzA2IDIxNCwzMTkgMjE4LDMyNCAyMDgsMzMxIDIxNSwzMzUgMjEwLDM0MSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjY2ZjZmNmIiBzdHJva2Utb3BhY2l0eT0iMC43OSIgc3Ryb2tlLXdpZHRoPSIxLjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxwb2x5bGluZSBwb2ludHM9IjI0MSwzMDcgMjM3LDMwOCAyMzQsMzIxIDIzMSwzMzIgMjMwLDMzNSAyMTksMzQ3IDIzMywzNDcgMjE0LDM2MCAyMzMsMzYyIiBmaWxsPSJub25lIiBzdHJva2U9IiNjZmNmY2YiIHN0cm9rZS1vcGFjaXR5PSIwLjg0IiBzdHJva2Utd2lkdGg9IjEuNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PHBvbHlsaW5lIHBvaW50cz0iMjE5LDIyNSAyMTksMjIwIDE5OSwyMTIgMTk0LDIwNCAyMDIsMjAwIDE4OSwxOTUgMTc4LDE5NyAxNzgsMTgxIDE2OCwxNzgiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2NmY2ZjZiIgc3Ryb2tlLW9wYWNpdHk9IjAuNzUiIHN0cm9rZS13aWR0aD0iMS4wIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48cG9seWxpbmUgcG9pbnRzPSIxNDgsMTgxIDE1NiwxNzEgMTQxLDE3OCAxNDYsMTYwIDE0NiwxNjggMTQwLDE3MyAxMzMsMTU4IDEzNywxNTUgMTI4LDE0NCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjY2ZjZmNmIiBzdHJva2Utb3BhY2l0eT0iMC45MCIgc3Ryb2tlLXdpZHRoPSIxLjEiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxwb2x5bGluZSBwb2ludHM9IjIxMywyMTQgMjEwLDE5OSAyMTAsMjA0IDIwOSwxOTggMjA2LDE4OSAyMTIsMTkxIDIwNiwxODYgMTk1LDE3OSAyMDUsMTg2IiBmaWxsPSJub25lIiBzdHJva2U9IiNjZmNmY2YiIHN0cm9rZS1vcGFjaXR5PSIwLjgwIiBzdHJva2Utd2lkdGg9IjEuMSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PHBvbHlsaW5lIHBvaW50cz0iMjAxLDIyMiAyMDUsMjIwIDE5NiwyMTAgMTg1LDIwOSAxODEsMjA5IDE4MiwxOTYgMTc1LDE5MiAxNTMsMTk3IDE1NSwxNzkiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2NmY2ZjZiIgc3Ryb2tlLW9wYWNpdHk9IjAuNjkiIHN0cm9rZS13aWR0aD0iMS4zIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48cG9seWxpbmUgcG9pbnRzPSIyMDUsMjM0IDE5NywyMjggMTg5LDIzMyAxODksMjIzIDE4OCwyMjYgMTg0LDIyNCAxODgsMjEzIDE3OSwyMTYgMTc0LDIyMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjY2ZjZmNmIiBzdHJva2Utb3BhY2l0eT0iMC44NiIgc3Ryb2tlLXdpZHRoPSIwLjkiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxwb2x5bGluZSBwb2ludHM9IjE1NSwyMTAgMTM2LDIwMyAxMjcsMjA0IDEyNCwxODUgMTA2LDE4NiA5NSwxODAgNzQsMTc3IDU4LDE4MyA0NiwxNjYiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2NmY2ZjZiIgc3Ryb2tlLW9wYWNpdHk9IjAuNzkiIHN0cm9rZS13aWR0aD0iMS4yIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48cG9seWxpbmUgcG9pbnRzPSIyMTEsMjc2IDE5NywyNzQgMTk1LDI4NSAxODYsMjkyIDE4MywzMDUgMTc1LDMwMCAxNjEsMzAzIDE2MiwzMDQgMTUzLDMxMiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjY2ZjZmNmIiBzdHJva2Utb3BhY2l0eT0iMC44NyIgc3Ryb2tlLXdpZHRoPSIxLjQiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxwb2x5bGluZSBwb2ludHM9IjEzNywzMjIgMTM3LDMzOCAxMjksMzM1IDEyMCwzMzggMTEzLDM0MiA5NSwzNDQgODgsMzU1IDc4LDM2MCA3OSwzNzYiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2NmY2ZjZiIgc3Ryb2tlLW9wYWNpdHk9IjAuNzYiIHN0cm9rZS13aWR0aD0iMC45IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48cG9seWxpbmUgcG9pbnRzPSIyODYsMjU0IDI5MSwyNTcgMjk4LDI1MSAzMTksMjU1IDMyNiwyNzIgMzMxLDI2MiAzNDAsMjc3IDM1OCwyNTkgMzY4LDI2NiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjY2ZjZmNmIiBzdHJva2Utb3BhY2l0eT0iMC41OSIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxwb2x5bGluZSBwb2ludHM9IjM4MSwyNzAgMzkxLDI2OCAzOTQsMjc5IDQxMiwyNzMgNDIxLDI3NCA0MjIsMjc4IDQzMSwyNzkgNDM1LDI3OCA0MzUsMjgyIiBmaWxsPSJub25lIiBzdHJva2U9IiNjZmNmY2YiIHN0cm9rZS1vcGFjaXR5PSIwLjg1IiBzdHJva2Utd2lkdGg9IjEuNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PHBvbHlsaW5lIHBvaW50cz0iMjY3LDI4MiAyNzMsMjgxIDI4MCwyOTIgMjkzLDI5NCAyOTQsMjk5IDI5NywzMTIgMzAxLDMxMyAzMDcsMzI0IDMxNywzMjUiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2NmY2ZjZiIgc3Ryb2tlLW9wYWNpdHk9IjAuNjAiIHN0cm9rZS13aWR0aD0iMS40IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48cG9seWxpbmUgcG9pbnRzPSIzMjUsMzM2IDMyNiwzNDAgMzMxLDM0MyAzMzMsMzU1IDM0MSwzNjAgMzQyLDM1MCAzNDcsMzU2IDM1NCwzNjcgMzQ2LDM4MiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjY2ZjZmNmIiBzdHJva2Utb3BhY2l0eT0iMC41NCIgc3Ryb2tlLXdpZHRoPSIxLjMiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxwb2x5bGluZSBwb2ludHM9IjI4NiwyNTMgMjgzLDI1MyAyOTEsMjYwIDMwNiwyNDYgMzE5LDI2MCAzMzAsMjY1IDMzNSwyNDggMzQ1LDI1NiAzNDksMjU3IiBmaWxsPSJub25lIiBzdHJva2U9IiNjZmNmY2YiIHN0cm9rZS1vcGFjaXR5PSIwLjQ4IiBzdHJva2Utd2lkdGg9IjEuNCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PHBvbHlsaW5lIHBvaW50cz0iMzcxLDI2MiAzNzEsMjUyIDM3MSwyNjYgMzc5LDI3MiAzOTAsMjU4IDM5MiwyNTggMzk0LDI2NyA0MDAsMjU1IDM5NywyNTQiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2NmY2ZjZiIgc3Ryb2tlLW9wYWNpdHk9IjAuNzgiIHN0cm9rZS13aWR0aD0iMC45IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48cG9seWxpbmUgcG9pbnRzPSIzMTEsMjMzIDMxNiwyMzggMzEzLDIzNCAzMjgsMjI4IDMzNywyNDQgMzMzLDIzMCAzMzgsMjMxIDM0NiwyMjMgMzQ5LDIxNyIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjY2ZjZmNmIiBzdHJva2Utb3BhY2l0eT0iMC41MSIgc3Ryb2tlLXdpZHRoPSIxLjMiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxwb2x5bGluZSBwb2ludHM9IjM3NywyMjEgMzc3LDIyNCAzODksMjEyIDM5OCwyMjcgNDE1LDIyNCA0MTQsMjA5IDQyNSwyMTIgNDM3LDIwNyA0NDgsMjA5IiBmaWxsPSJub25lIiBzdHJva2U9IiNjZmNmY2YiIHN0cm9rZS1vcGFjaXR5PSIwLjQ4IiBzdHJva2Utd2lkdGg9IjEuMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PHBvbHlsaW5lIHBvaW50cz0iMjE1LDIzNyAyMDQsMjIyIDE5NiwyMTYgMTg2LDIxNCAxNzQsMjE5IDE3OSwyMDcgMTU4LDIwOCAxNTYsMjAwIDE0NiwyMDAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2NmY2ZjZiIgc3Ryb2tlLW9wYWNpdHk9IjAuNDkiIHN0cm9rZS13aWR0aD0iMS4zIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48cG9seWxpbmUgcG9pbnRzPSIxMjIsMTk3IDExOCwxOTMgMTIxLDE5NiAxMjUsMTc0IDExOCwxODIgMTE0LDE3NiAxMTAsMTc4IDEwMSwxNjQgOTgsMTYwIiBmaWxsPSJub25lIiBzdHJva2U9IiNjZmNmY2YiIHN0cm9rZS1vcGFjaXR5PSIwLjg3IiBzdHJva2Utd2lkdGg9IjEuNyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PHBvbHlsaW5lIHBvaW50cz0iMjQyLDIxMyAyMjksMjA5IDIzMCwxOTcgMjM5LDE4OSAyMzcsMTgyIDIyOSwxNzIgMjEzLDE2NyAyMjMsMTU5IDIyNCwxNDkiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2NmY2ZjZiIgc3Ryb2tlLW9wYWNpdHk9IjAuNTAiIHN0cm9rZS13aWR0aD0iMS42IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48cG9seWxpbmUgcG9pbnRzPSIyMTIsMTI2IDIwMywxMjYgMjA1LDExOCAyMDcsMTA4IDIwNSwxMDAgMTg3LDg3IDE4NSw4NCAxODAsNjMgMTgzLDYzIiBmaWxsPSJub25lIiBzdHJva2U9IiNjZmNmY2YiIHN0cm9rZS1vcGFjaXR5PSIwLjY4IiBzdHJva2Utd2lkdGg9IjEuMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PHBvbHlsaW5lIHBvaW50cz0iMjExLDIwMCAyMTgsMTk2IDIwNiwxOTMgMjAzLDE4MSAxOTYsMTc2IDIwMiwxNzUgMTkxLDE1OSAxOTAsMTYzIDE3MywxNjMiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2NmY2ZjZiIgc3Ryb2tlLW9wYWNpdHk9IjAuNjciIHN0cm9rZS13aWR0aD0iMC45IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48cG9seWxpbmUgcG9pbnRzPSIxNzIsMTQ4IDE3MSwxMzIgMTY3LDEzNiAxNTMsMTI0IDE1MiwxMTEgMTUwLDEwNCAxMjQsMTA1IDEzNSw5MSAxMjQsOTciIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2NmY2ZjZiIgc3Ryb2tlLW9wYWNpdHk9IjAuNjEiIHN0cm9rZS13aWR0aD0iMS4xIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48cG9seWxpbmUgcG9pbnRzPSIyOTgsMjQ5IDMwNywyNjMgMzA1LDI1NCAzMTMsMjU3IDMyNCwyNTkgMzIxLDI1NiAzMzEsMjU5IDM0MywyNTMgMzQxLDI2MSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjY2ZjZmNmIiBzdHJva2Utb3BhY2l0eT0iMC43MiIgc3Ryb2tlLXdpZHRoPSIwLjgiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxwb2x5bGluZSBwb2ludHM9IjM2MSwyNjMgMzYwLDI3NiAzNzQsMjcyIDM4MSwyNjAgMzk2LDI2NSA0MDMsMjc2IDQxOCwyNjMgNDI1LDI3NyA0MzUsMjc4IiBmaWxsPSJub25lIiBzdHJva2U9IiNjZmNmY2YiIHN0cm9rZS1vcGFjaXR5PSIwLjcwIiBzdHJva2Utd2lkdGg9IjEuMCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PHBvbHlsaW5lIHBvaW50cz0iMjMyLDIyMyAyNDIsMjA4IDIzNSwxOTYgMjM1LDIwMSAyMzYsMTg5IDIxOSwxODIgMjI4LDE2OCAyMjIsMTU4IDIyNiwxNjAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2NmY2ZjZiIgc3Ryb2tlLW9wYWNpdHk9IjAuNTQiIHN0cm9rZS13aWR0aD0iMC44IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48cG9seWxpbmUgcG9pbnRzPSIyMTQsMjc0IDIwOCwyNzggMTk3LDI4MyAyMDAsMjkyIDE5MCwyOTQgMTg2LDI5NyAxNzMsMjk5IDE2NywyOTcgMTcwLDMwMyIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjY2ZjZmNmIiBzdHJva2Utb3BhY2l0eT0iMC44OSIgc3Ryb2tlLXdpZHRoPSIxLjAiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxwb2x5bGluZSBwb2ludHM9IjE1NiwzMTcgMTQzLDMxMiAxMzcsMzM3IDEyOSwzMjggMTEwLDMzNyA5NiwzNTUgODMsMzQ4IDcyLDM2MCA1NiwzNjgiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2NmY2ZjZiIgc3Ryb2tlLW9wYWNpdHk9IjAuNDkiIHN0cm9rZS13aWR0aD0iMS4zIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48cG9seWxpbmUgcG9pbnRzPSIyNTUsMjIwIDI0OCwyMTEgMjQ1LDIwMiAyNDQsMTkwIDI0OSwxNzggMjQyLDE2NiAyNTEsMTU3IDI0MCwxNTQgMjUxLDE0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjY2ZjZmNmIiBzdHJva2Utb3BhY2l0eT0iMC42NyIgc3Ryb2tlLXdpZHRoPSIxLjAiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxwb2x5bGluZSBwb2ludHM9IjIwNSwyMDggMjA0LDIxMSAxOTQsMjE0IDE5MSwyMTAgMTkzLDIwNyAxODUsMjAwIDE5MSwyMDEgMTgyLDE5MCAxNzksMjAxIiBmaWxsPSJub25lIiBzdHJva2U9IiNjZmNmY2YiIHN0cm9rZS1vcGFjaXR5PSIwLjc2IiBzdHJva2Utd2lkdGg9IjEuNiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PHBvbHlsaW5lIHBvaW50cz0iMTU1LDE3OCAxNjMsMTY3IDE0NiwxNTkgMTI3LDE2MiAxMjYsMTUwIDEyMSwxNDUgMTEwLDEzNCAxMDksMTMxIDEwMSwxMTIiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2NmY2ZjZiIgc3Ryb2tlLW9wYWNpdHk9IjAuNTMiIHN0cm9rZS13aWR0aD0iMS4xIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48cG9seWxpbmUgcG9pbnRzPSIyMjQsMjM0IDIyMCwyMjcgMjEyLDIxOCAyMDMsMjExIDE5MywxOTQgMTkxLDE5MCAxODIsMTg4IDE3MSwxNzQgMTU5LDE3NyIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjY2ZjZmNmIiBzdHJva2Utb3BhY2l0eT0iMC43MCIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxwb2x5bGluZSBwb2ludHM9IjIzOCwyNTcgMjU2LDI2NiAyNjUsMjU2IDI1NSwyNjQgMjUyLDI3MyAyMzYsMjcwIDI0MiwyNjgiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2JmYmZiZiIgc3Ryb2tlLW9wYWNpdHk9IjAuNjMiIHN0cm9rZS13aWR0aD0iMS4xIi8+PHBvbHlsaW5lIHBvaW50cz0iMjYwLDMwMCAyNjMsMzA2IDI0NywzMDUgMjI3LDMxNiAyMTUsMzA3IDIwOCwzMTUgMTk3LDMyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjYmZiZmJmIiBzdHJva2Utb3BhY2l0eT0iMC4zNiIgc3Ryb2tlLXdpZHRoPSIxLjMiLz48cG9seWxpbmUgcG9pbnRzPSIyNDEsMjY3IDIyMywyNTcgMjM4LDI2NiAyMTYsMjYyIDIzMSwyNjUgMjUwLDI2OSAyMzcsMjcwIiBmaWxsPSJub25lIiBzdHJva2U9IiNiZmJmYmYiIHN0cm9rZS1vcGFjaXR5PSIwLjU4IiBzdHJva2Utd2lkdGg9IjEuMCIvPjxwb2x5bGluZSBwb2ludHM9IjI0NCwyMzAgMjU4LDIzOSAyNTQsMjQyIDI1MiwyNDAgMjY3LDIzOSAyNjEsMjI3IDI0NywyMjkiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2JmYmZiZiIgc3Ryb2tlLW9wYWNpdHk9IjAuNTYiIHN0cm9rZS13aWR0aD0iMS4yIi8+PHBvbHlsaW5lIHBvaW50cz0iMjU4LDI2MyAyNDcsMjYwIDIyOCwyNjYgMjE5LDI2OCAyMzksMjc0IDIyMSwyODIgMjQwLDI5MiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjYmZiZmJmIiBzdHJva2Utb3BhY2l0eT0iMC43MyIgc3Ryb2tlLXdpZHRoPSIwLjkiLz48cG9seWxpbmUgcG9pbnRzPSIyNDgsMjYxIDIzOCwyNjMgMjUzLDI3MSAyNTUsMjYzIDI2NSwyNzQgMjYyLDI4MCAyNTMsMjg3IiBmaWxsPSJub25lIiBzdHJva2U9IiNiZmJmYmYiIHN0cm9rZS1vcGFjaXR5PSIwLjUwIiBzdHJva2Utd2lkdGg9IjAuOSIvPjxwb2x5bGluZSBwb2ludHM9IjI5MywyNzYgMzE1LDI2MiAzMDEsMjUwIDMxOSwyNTQgMzA3LDI2OCAyODgsMjU2IDMwOSwyNDkiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2JmYmZiZiIgc3Ryb2tlLW9wYWNpdHk9IjAuNDAiIHN0cm9rZS13aWR0aD0iMS4xIi8+PHBvbHlsaW5lIHBvaW50cz0iMjMwLDI5OSAyNTEsMjk1IDI1NiwyOTQgMjUzLDI5NyAyMzgsMjkxIDI1NiwyOTkgMjQwLDI4NSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjYmZiZmJmIiBzdHJva2Utb3BhY2l0eT0iMC40MiIgc3Ryb2tlLXdpZHRoPSIwLjgiLz48cG9seWxpbmUgcG9pbnRzPSIyNTksMjQ0IDI1MywyMzYgMjUyLDIyMyAyNDcsMjMyIDIzOSwyNDQgMjM1LDIzMiAyMjQsMjI5IiBmaWxsPSJub25lIiBzdHJva2U9IiNiZmJmYmYiIHN0cm9rZS1vcGFjaXR5PSIwLjU5IiBzdHJva2Utd2lkdGg9IjEuMiIvPjxwb2x5bGluZSBwb2ludHM9IjI1OCwyNDYgMjU5LDI1NSAyODAsMjY4IDI4MSwyNzIgMjc4LDI3MCAyODYsMjgyIDI3MCwyNzkiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2JmYmZiZiIgc3Ryb2tlLW9wYWNpdHk9IjAuNzQiIHN0cm9rZS13aWR0aD0iMS40Ii8+PHBvbHlsaW5lIHBvaW50cz0iMjQ1LDI2MyAyNTUsMjYwIDI0NiwyNjUgMjUwLDI1OCAyNjQsMjYwIDI0NywyNzAgMjQyLDI4MSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjYmZiZmJmIiBzdHJva2Utb3BhY2l0eT0iMC4zMyIgc3Ryb2tlLXdpZHRoPSIwLjciLz48cG9seWxpbmUgcG9pbnRzPSIyNDUsMjEzIDIyNywyMjIgMjQ4LDIxOCAyNTQsMjE4IDI1OCwyMTQgMjcwLDIxOSAyNzUsMjA4IiBmaWxsPSJub25lIiBzdHJva2U9IiNiZmJmYmYiIHN0cm9rZS1vcGFjaXR5PSIwLjY2IiBzdHJva2Utd2lkdGg9IjEuMCIvPjxwb2x5bGluZSBwb2ludHM9IjIwNiwyODEgMjIyLDI5MiAyMDcsMjc5IDIxNywyOTIgMjA0LDI5NCAxODYsMjkyIDE4MSwyODkiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2JmYmZiZiIgc3Ryb2tlLW9wYWNpdHk9IjAuNTQiIHN0cm9rZS13aWR0aD0iMS4wIi8+PHBvbHlsaW5lIHBvaW50cz0iMjE0LDI1MiAyMjQsMjQxIDIzOSwyNDkgMjMyLDIzOCAyMjksMjM5IDIyOCwyMzAgMjI3LDIzNyIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjYmZiZmJmIiBzdHJva2Utb3BhY2l0eT0iMC40NSIgc3Ryb2tlLXdpZHRoPSIwLjciLz48cG9seWxpbmUgcG9pbnRzPSIyNzcsMjQ4IDI2OSwyNDkgMjgxLDIzNyAyNzksMjI1IDI4NSwyMjYgMjcwLDIzNCAyNTcsMjM0IiBmaWxsPSJub25lIiBzdHJva2U9IiNiZmJmYmYiIHN0cm9rZS1vcGFjaXR5PSIwLjQyIiBzdHJva2Utd2lkdGg9IjEuMiIvPjxwb2x5bGluZSBwb2ludHM9IjIzNiwyODYgMjUyLDI3NCAyNDksMjg2IDI1MCwyNzYgMjM5LDI3MyAyNTMsMjgwIDI0NSwyODkiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2JmYmZiZiIgc3Ryb2tlLW9wYWNpdHk9IjAuNjciIHN0cm9rZS13aWR0aD0iMS40Ii8+PHBvbHlsaW5lIHBvaW50cz0iMjgyLDI3NCAyNjcsMjgwIDI4NCwyOTQgMjg5LDI5MiAyODQsMjk0IDI4NSwyODMgMjk1LDI4NyIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjYmZiZmJmIiBzdHJva2Utb3BhY2l0eT0iMC40NyIgc3Ryb2tlLXdpZHRoPSIxLjMiLz48cG9seWxpbmUgcG9pbnRzPSIyNjAsMjAxIDI2NCwyMDkgMjUyLDIwNyAyNjksMjA4IDI3MywyMDIgMjU5LDIxNiAyNzksMjAzIiBmaWxsPSJub25lIiBzdHJva2U9IiNiZmJmYmYiIHN0cm9rZS1vcGFjaXR5PSIwLjQ1IiBzdHJva2Utd2lkdGg9IjAuOSIvPjxwb2x5bGluZSBwb2ludHM9IjI4MSwyNTkgMjY1LDI1NyAyNjcsMjQ1IDI2OCwyMzMgMjQ2LDI0NyAyNDcsMjMzIDI0NCwyNDYiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2JmYmZiZiIgc3Ryb2tlLW9wYWNpdHk9IjAuNTQiIHN0cm9rZS13aWR0aD0iMS4xIi8+PHBvbHlsaW5lIHBvaW50cz0iMjE4LDI3MSAyMzksMjY5IDI0MywyNjAgMjY0LDI3MiAyODQsMjY1IDI4MywyNjQgMjc2LDI2MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjYmZiZmJmIiBzdHJva2Utb3BhY2l0eT0iMC42MiIgc3Ryb2tlLXdpZHRoPSIxLjAiLz48cG9seWxpbmUgcG9pbnRzPSIyNjUsMjI2IDI4NCwyMzAgMjgwLDIzOSAyODcsMjQ1IDI4MiwyNDAgMjgyLDI0OCAyOTQsMjQ3IiBmaWxsPSJub25lIiBzdHJva2U9IiNiZmJmYmYiIHN0cm9rZS1vcGFjaXR5PSIwLjYzIiBzdHJva2Utd2lkdGg9IjAuNyIvPjxwb2x5bGluZSBwb2ludHM9IjI2OSwyMjMgMjY4LDIzMiAyNjAsMjI2IDI2NiwyMjcgMjg2LDIzMiAyODcsMjMzIDI2NiwyNDUiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2JmYmZiZiIgc3Ryb2tlLW9wYWNpdHk9IjAuNDMiIHN0cm9rZS13aWR0aD0iMS40Ii8+PHBvbHlsaW5lIHBvaW50cz0iMjQ4LDIwMyAyMzEsMTkyIDIyMiwxODMgMjE1LDE3MSAyMjYsMTYwIDIwOSwxNTEgMjI2LDE0OCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjYmZiZmJmIiBzdHJva2Utb3BhY2l0eT0iMC42MSIgc3Ryb2tlLXdpZHRoPSIxLjAiLz48cG9seWxpbmUgcG9pbnRzPSIyNzAsMjM3IDI4OSwyMzUgMjgzLDI0NyAzMDUsMjQ0IDMxNiwyNDggMzM1LDI0MyAzMTcsMjUxIiBmaWxsPSJub25lIiBzdHJva2U9IiNiZmJmYmYiIHN0cm9rZS1vcGFjaXR5PSIwLjM4IiBzdHJva2Utd2lkdGg9IjEuMCIvPjxwb2x5bGluZSBwb2ludHM9IjIzNywyNTQgMjQ1LDI2MCAyMzAsMjYyIDIyNSwyNzAgMjQwLDI1OCAyNDcsMjQ3IDI0NSwyMzkiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2JmYmZiZiIgc3Ryb2tlLW9wYWNpdHk9IjAuNjIiIHN0cm9rZS13aWR0aD0iMC44Ii8+PHBvbHlsaW5lIHBvaW50cz0iMjU3LDI2NSAyMzksMjYzIDIzNiwyNjEgMjUyLDI2OCAyMzIsMjc1IDI0MCwyNzIgMjI2LDI2OSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjYmZiZmJmIiBzdHJva2Utb3BhY2l0eT0iMC43NSIgc3Ryb2tlLXdpZHRoPSIwLjkiLz48cG9seWxpbmUgcG9pbnRzPSIyNDAsMzAyIDI1NywzMDEgMjQ2LDI4OSAyNDIsMzAyIDI0NCwzMTMgMjUwLDMyNSAyNDMsMzE1IiBmaWxsPSJub25lIiBzdHJva2U9IiNiZmJmYmYiIHN0cm9rZS1vcGFjaXR5PSIwLjU2IiBzdHJva2Utd2lkdGg9IjAuOCIvPjxwb2x5bGluZSBwb2ludHM9IjIwMywyNDIgMTk2LDI1MCAyMTgsMjU1IDIxMiwyNTkgMjEwLDI1MyAxOTUsMjQ4IDIxMiwyNDMiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2JmYmZiZiIgc3Ryb2tlLW9wYWNpdHk9IjAuNDUiIHN0cm9rZS13aWR0aD0iMS4yIi8+PHBvbHlsaW5lIHBvaW50cz0iMjc5LDI3NCAyODEsMjY1IDI2MiwyNTMgMjgzLDI2NiAzMDMsMjY1IDMxNCwyNTggMzA1LDI1MiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjYmZiZmJmIiBzdHJva2Utb3BhY2l0eT0iMC42NCIgc3Ryb2tlLXdpZHRoPSIwLjkiLz48cG9seWxpbmUgcG9pbnRzPSIyMjAsMjU2IDIyMywyNjkgMjA3LDI4MSAyMjgsMjc4IDIzOCwyNzEgMjQ2LDI3NSAyNTgsMjgwIiBmaWxsPSJub25lIiBzdHJva2U9IiNiZmJmYmYiIHN0cm9rZS1vcGFjaXR5PSIwLjQ1IiBzdHJva2Utd2lkdGg9IjEuMCIvPjxwb2x5bGluZSBwb2ludHM9IjIzMCwyNzAgMjE2LDI2MyAyMDcsMjYzIDIyNywyNjEgMjQ1LDI1NiAyMzcsMjQ4IDI1NCwyNDAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2JmYmZiZiIgc3Ryb2tlLW9wYWNpdHk9IjAuNzQiIHN0cm9rZS13aWR0aD0iMS4zIi8+PHBvbHlsaW5lIHBvaW50cz0iMjU5LDIxNCAyNjIsMjE5IDI3OSwyMjEgMjc2LDIwNyAyOTgsMjE3IDMxMCwyMTAgMzMwLDIwMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjYmZiZmJmIiBzdHJva2Utb3BhY2l0eT0iMC43MCIgc3Ryb2tlLXdpZHRoPSIwLjciLz48cG9seWxpbmUgcG9pbnRzPSIyNTUsMTk5IDI2MiwxODcgMjczLDE4NCAyOTEsMTg3IDMxMywxOTIgMjk3LDE4NiAzMTMsMTczIiBmaWxsPSJub25lIiBzdHJva2U9IiNiZmJmYmYiIHN0cm9rZS1vcGFjaXR5PSIwLjczIiBzdHJva2Utd2lkdGg9IjEuMSIvPjxwb2x5bGluZSBwb2ludHM9IjI1NywyMjUgMjU1LDIzMyAyNDEsMjM0IDI1MywyMjggMjM1LDIzNSAyNTAsMjQ4IDI3MCwyNTMiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2JmYmZiZiIgc3Ryb2tlLW9wYWNpdHk9IjAuNzAiIHN0cm9rZS13aWR0aD0iMS4yIi8+PHBhdGggZD0iTTYxIDM0NEg3NE02OCAzMzhWMzUxIiBzdHJva2U9IiNkY2RjZGMiIHN0cm9rZS1vcGFjaXR5PSIwLjg4IiBzdHJva2Utd2lkdGg9IjEuMiIvPjxwYXRoIGQ9Ik0zNTAgMzk1SDM1OU0zNTQgMzkwVjM5OSIgc3Ryb2tlPSIjZGNkY2RjIiBzdHJva2Utb3BhY2l0eT0iMC41NCIgc3Ryb2tlLXdpZHRoPSIxLjIiLz48cGF0aCBkPSJNNDM3IDIxNEg0NDhNNDQyIDIwOVYyMjAiIHN0cm9rZT0iI2RjZGNkYyIgc3Ryb2tlLW9wYWNpdHk9IjAuOTEiIHN0cm9rZS13aWR0aD0iMS4yIi8+PHBhdGggZD0iTTExNSAyNjJIMTI4TTEyMSAyNTZWMjY5IiBzdHJva2U9IiNkY2RjZGMiIHN0cm9rZS1vcGFjaXR5PSIwLjc5IiBzdHJva2Utd2lkdGg9IjEuMiIvPjxwYXRoIGQ9Ik00MDcgMTM0SDQyMU00MTQgMTI3VjE0MSIgc3Ryb2tlPSIjZGNkY2RjIiBzdHJva2Utb3BhY2l0eT0iMC44NiIgc3Ryb2tlLXdpZHRoPSIxLjIiLz48cGF0aCBkPSJNNDI3IDIzMkg0MzZNNDMxIDIyN1YyMzYiIHN0cm9rZT0iI2RjZGNkYyIgc3Ryb2tlLW9wYWNpdHk9IjAuNjkiIHN0cm9rZS13aWR0aD0iMS4yIi8+PHBhdGggZD0iTTE1MyA0MTJIMTY0TTE1OCA0MDdWNDE3IiBzdHJva2U9IiNkY2RjZGMiIHN0cm9rZS1vcGFjaXR5PSIwLjc2IiBzdHJva2Utd2lkdGg9IjEuMiIvPjxwYXRoIGQ9Ik0zNDggMTMySDM1OU0zNTQgMTI3VjEzOCIgc3Ryb2tlPSIjZGNkY2RjIiBzdHJva2Utb3BhY2l0eT0iMC41MiIgc3Ryb2tlLXdpZHRoPSIxLjIiLz48cGF0aCBkPSJNMzE2IDExOUgzMjhNMzIyIDExM1YxMjUiIHN0cm9rZT0iI2RjZGNkYyIgc3Ryb2tlLW9wYWNpdHk9IjAuNTUiIHN0cm9rZS13aWR0aD0iMS4yIi8+PHBhdGggZD0iTTIwOSAzNzdIMjIxTTIxNSAzNzFWMzg0IiBzdHJva2U9IiNkY2RjZGMiIHN0cm9rZS1vcGFjaXR5PSIwLjg2IiBzdHJva2Utd2lkdGg9IjEuMiIvPjxwYXRoIGQ9Ik0zMzYgMzcxSDM0Nk0zNDEgMzY2VjM3NiIgc3Ryb2tlPSIjZGNkY2RjIiBzdHJva2Utb3BhY2l0eT0iMC43MSIgc3Ryb2tlLXdpZHRoPSIxLjIiLz48cGF0aCBkPSJNNDQ4IDM1NUg0NThNNDUzIDM1MFYzNjEiIHN0cm9rZT0iI2RjZGNkYyIgc3Ryb2tlLW9wYWNpdHk9IjAuOTAiIHN0cm9rZS13aWR0aD0iMS4yIi8+PHBhdGggZD0iTTMwMSAzNzlIMzEyTTMwNyAzNzRWMzg1IiBzdHJva2U9IiNkY2RjZGMiIHN0cm9rZS1vcGFjaXR5PSIwLjY1IiBzdHJva2Utd2lkdGg9IjEuMiIvPjxwYXRoIGQ9Ik04NiAyMTRIOThNOTIgMjA4VjIyMCIgc3Ryb2tlPSIjZGNkY2RjIiBzdHJva2Utb3BhY2l0eT0iMC44MiIgc3Ryb2tlLXdpZHRoPSIxLjIiLz48cGF0aCBkPSJNMzI2IDExOUgzMzhNMzMyIDExM1YxMjUiIHN0cm9rZT0iI2RjZGNkYyIgc3Ryb2tlLW9wYWNpdHk9IjAuNjkiIHN0cm9rZS13aWR0aD0iMS4yIi8+PHBhdGggZD0iTTk2IDIwMEgxMDdNMTAyIDE5NVYyMDYiIHN0cm9rZT0iI2RjZGNkYyIgc3Ryb2tlLW9wYWNpdHk9IjAuNzkiIHN0cm9rZS13aWR0aD0iMS4yIi8+PGNpcmNsZSBjeD0iMzY1IiBjeT0iMjYzIiByPSIxLjAiIGZpbGw9IiNjZmNmY2YiIGZpbGwtb3BhY2l0eT0iMC44NyIvPjxjaXJjbGUgY3g9IjM0IiBjeT0iMjIxIiByPSIxLjAiIGZpbGw9IiNjZmNmY2YiIGZpbGwtb3BhY2l0eT0iMC42OCIvPjxjaXJjbGUgY3g9IjM3OSIgY3k9IjEwMiIgcj0iMC45IiBmaWxsPSIjY2ZjZmNmIiBmaWxsLW9wYWNpdHk9IjAuNDUiLz48Y2lyY2xlIGN4PSIzNzUiIGN5PSI0MzciIHI9IjAuOSIgZmlsbD0iI2NmY2ZjZiIgZmlsbC1vcGFjaXR5PSIwLjYxIi8+PGNpcmNsZSBjeD0iMjg4IiBjeT0iNzAiIHI9IjAuNiIgZmlsbD0iI2NmY2ZjZiIgZmlsbC1vcGFjaXR5PSIwLjYyIi8+PGNpcmNsZSBjeD0iMjE4IiBjeT0iMzUwIiByPSIwLjkiIGZpbGw9IiNjZmNmY2YiIGZpbGwtb3BhY2l0eT0iMC41OSIvPjxjaXJjbGUgY3g9IjIzNCIgY3k9IjE0NCIgcj0iMS4xIiBmaWxsPSIjY2ZjZmNmIiBmaWxsLW9wYWNpdHk9IjAuNTYiLz48Y2lyY2xlIGN4PSIzMjAiIGN5PSIyMzYiIHI9IjEuMyIgZmlsbD0iI2NmY2ZjZiIgZmlsbC1vcGFjaXR5PSIwLjQ1Ii8+PGNpcmNsZSBjeD0iMjE4IiBjeT0iMTk3IiByPSIxLjIiIGZpbGw9IiNjZmNmY2YiIGZpbGwtb3BhY2l0eT0iMC44OSIvPjxjaXJjbGUgY3g9IjM0NCIgY3k9IjY2IiByPSIwLjkiIGZpbGw9IiNjZmNmY2YiIGZpbGwtb3BhY2l0eT0iMC41OCIvPjxjaXJjbGUgY3g9IjQxOSIgY3k9IjIwNCIgcj0iMS4yIiBmaWxsPSIjY2ZjZmNmIiBmaWxsLW9wYWNpdHk9IjAuNzEiLz48Y2lyY2xlIGN4PSI2MiIgY3k9IjI4MyIgcj0iMS40IiBmaWxsPSIjY2ZjZmNmIiBmaWxsLW9wYWNpdHk9IjAuNDEiLz48Y2lyY2xlIGN4PSIxMzgiIGN5PSIyMTYiIHI9IjAuOSIgZmlsbD0iI2NmY2ZjZiIgZmlsbC1vcGFjaXR5PSIwLjg3Ii8+PGNpcmNsZSBjeD0iMTc5IiBjeT0iMTc5IiByPSIwLjkiIGZpbGw9IiNjZmNmY2YiIGZpbGwtb3BhY2l0eT0iMC43NSIvPjxjaXJjbGUgY3g9IjIzMyIgY3k9IjkxIiByPSIwLjgiIGZpbGw9IiNjZmNmY2YiIGZpbGwtb3BhY2l0eT0iMC45MCIvPjxjaXJjbGUgY3g9IjE1MyIgY3k9IjExNyIgcj0iMC42IiBmaWxsPSIjY2ZjZmNmIiBmaWxsLW9wYWNpdHk9IjAuODQiLz48Y2lyY2xlIGN4PSIyODQiIGN5PSIzMDkiIHI9IjEuNSIgZmlsbD0iI2NmY2ZjZiIgZmlsbC1vcGFjaXR5PSIwLjc2Ii8+PGNpcmNsZSBjeD0iMzI5IiBjeT0iMjk2IiByPSIxLjAiIGZpbGw9IiNjZmNmY2YiIGZpbGwtb3BhY2l0eT0iMC43MyIvPjxjaXJjbGUgY3g9IjE5MyIgY3k9IjE5OSIgcj0iMS40IiBmaWxsPSIjY2ZjZmNmIiBmaWxsLW9wYWNpdHk9IjAuNDUiLz48Y2lyY2xlIGN4PSIxNzMiIGN5PSIzNzEiIHI9IjEuMSIgZmlsbD0iI2NmY2ZjZiIgZmlsbC1vcGFjaXR5PSIwLjQ4Ii8+PGNpcmNsZSBjeD0iMTM1IiBjeT0iNDMwIiByPSIxLjQiIGZpbGw9IiNjZmNmY2YiIGZpbGwtb3BhY2l0eT0iMC44MiIvPjxjaXJjbGUgY3g9Ijg3IiBjeT0iMzEzIiByPSIxLjYiIGZpbGw9IiNjZmNmY2YiIGZpbGwtb3BhY2l0eT0iMC40OCIvPjxjaXJjbGUgY3g9IjQzNCIgY3k9IjI5MiIgcj0iMS41IiBmaWxsPSIjY2ZjZmNmIiBmaWxsLW9wYWNpdHk9IjAuNTYiLz48Y2lyY2xlIGN4PSIyMTYiIGN5PSIzNzIiIHI9IjEuNSIgZmlsbD0iI2NmY2ZjZiIgZmlsbC1vcGFjaXR5PSIwLjQxIi8+PGNpcmNsZSBjeD0iMjMxIiBjeT0iMjgiIHI9IjEuNCIgZmlsbD0iI2NmY2ZjZiIgZmlsbC1vcGFjaXR5PSIwLjc3Ii8+PGNpcmNsZSBjeD0iMTg2IiBjeT0iMjQ4IiByPSIwLjciIGZpbGw9IiNjZmNmY2YiIGZpbGwtb3BhY2l0eT0iMC43NSIvPjxjaXJjbGUgY3g9IjM5MCIgY3k9IjI5OSIgcj0iMC44IiBmaWxsPSIjY2ZjZmNmIiBmaWxsLW9wYWNpdHk9IjAuNjAiLz48Y2lyY2xlIGN4PSIyMjEiIGN5PSIxNDAiIHI9IjEuMCIgZmlsbD0iI2NmY2ZjZiIgZmlsbC1vcGFjaXR5PSIwLjY2Ii8+PGNpcmNsZSBjeD0iMzQxIiBjeT0iMTUwIiByPSIxLjAiIGZpbGw9IiNjZmNmY2YiIGZpbGwtb3BhY2l0eT0iMC41NyIvPjxjaXJjbGUgY3g9IjE1NiIgY3k9IjI2NyIgcj0iMC44IiBmaWxsPSIjY2ZjZmNmIiBmaWxsLW9wYWNpdHk9IjAuNTgiLz48L3N2Zz4K';
+
+/* ── state ─────────────────────────────────────────── */
+const KEY = 'desk-zone-v3';
+let today = new Date();
+const pad = n => String(n).padStart(2,'0');
+const iso = d => d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());   // local, not UTC
+const fmt12 = t => {                                  // '13:30' → '1:30 pm'
+  const [h,m] = t.split(':').map(Number);
+  return ((h%12)||12)+':'+pad(m)+' '+(h<12?'am':'pm');
+};
+const offset = n => { const d = new Date(today); d.setDate(d.getDate()+n); return iso(d); };
+
+const defaults = {
+  dark: false,
+  artImg: DEFAULT_ART_IMG,
+  artMarksLight: true,   // default burst = white lines on black
+  notify: false,
+  notified: {},
+  notes: { [offset(0)]: "settled into the new desk widget — it finally feels like mine." },
+  events: [
+    {date: offset(0), t:'09:00', name:'standup',        tag:'work'},
+    {date: offset(0), t:'13:30', name:'design review',  tag:'work'},
+    {date: offset(2), t:'18:00', name:'gym — pull day', tag:''},
+    {date: offset(3), t:'11:00', name:'dentist',        tag:'appt'},
+    {date: offset(6), t:'10:00', name:'farmers market', tag:''}
+  ],
+  goals: [
+    {name:'read 24 books',     pct:45},
+    {name:'ship side project', pct:70},
+    {name:'run 500 km',        pct:30}
+  ],
+  tasks: [
+    {text:'reply to landlord email',    done:false},
+    {text:'book flights for july trip', done:false},
+    {text:'refactor widget layout',     done:true},
+    {text:'water the plants',           done:false},
+    {text:'push portfolio update',      done:false}
+  ]
+};
+
+let state;
+try {
+  state = JSON.parse(localStorage.getItem(KEY));
+  if (!state){  // migrate v2 if present
+    const v2 = JSON.parse(localStorage.getItem('desk-zone-v2'));
+    state = v2 ? {...structuredClone(defaults), ...v2} : structuredClone(defaults);
+  }
+  delete state.art;                                   // retired ascii art
+  if (!state.artImg) state.artImg = DEFAULT_ART_IMG;
+  if (typeof state.artMarksLight !== 'boolean') state.artMarksLight = true;
+} catch(e){ state = structuredClone(defaults); }
+if (!state.notes) state.notes = {};
+if (!state.notified) state.notified = {};
+{ const cut = offset(-2);
+  for (const k of Object.keys(state.notified)) if (k.slice(0,10) < cut) delete state.notified[k]; }
+if (typeof state.notify !== 'boolean') state.notify = false;
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
+
+const MONTHS = ['JANUARY','FEBRUARY','MARCH','APRIL','MAY','JUNE','JULY','AUGUST','SEPTEMBER','OCTOBER','NOVEMBER','DECEMBER'];
+const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const $ = id => document.getElementById(id);
+const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+function fmtDay(ds){ const d=new Date(ds+'T00:00'); return MONTHS[d.getMonth()].slice(0,3).toLowerCase()+' '+d.getDate(); }
+function fmtLong(ds){ const d=new Date(ds+'T00:00'); return DAYS[d.getDay()]+' '+MONTHS[d.getMonth()].slice(0,3)+' '+d.getDate()+', '+d.getFullYear(); }
+
+/* ── dark mode + art inversion ─────────────────────── */
+function applyMode(){
+  document.body.classList.toggle('dark', state.dark);
+  $('mode-toggle').textContent = state.dark ? 'light' : 'dark';
+  syncArtInvert();
+}
+/* light marks want a dark mode; invert whenever art polarity mismatches theme */
+function syncArtInvert(){
+  const inv = state.artMarksLight !== state.dark;
+  ['art-home','art-preview'].forEach(id => $(id).classList.toggle('inv', inv));
+}
+$('mode-toggle').addEventListener('click', () => { state.dark = !state.dark; save(); applyMode(); });
+
+/* ── navigation ────────────────────────────────────── */
+let view = 'home';
+function go(v, focusAdd){
+  view = v;
+  document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+  $('view-'+v).classList.add('active');
+  $('foot-path').textContent = v;
+  renderAll();
+  if (focusAdd){
+    const input = {tasks:'task-input', goals:'goal-input', events:'evt-name'}[v];
+    if (input) setTimeout(() => $(input).focus(), 50);
+  }
+}
+
+/* keyboard shortcuts (skip when typing) */
+document.addEventListener('keydown', e => {
+  if (/INPUT|TEXTAREA/.test(document.activeElement.tagName)) return;
+  const k = e.key.toLowerCase();
+  if (k==='h') go('home');
+  if (k==='t') go('tasks');
+  if (k==='g') go('goals');
+  if (k==='e') go('events');
+  if (k==='a') go('art');
+  if (k==='n') openDiaryToday();
+  if (k==='d') { state.dark=!state.dark; save(); applyMode(); }
+});
+
+/* ── header date ───────────────────────────────────── */
+function renderHdrDate(){
+  $('hdr-date').textContent =
+    DAYS[today.getDay()].toUpperCase()+' '+pad(today.getDate())+' '+
+    MONTHS[today.getMonth()].slice(0,3)+' '+today.getFullYear();
+}
+renderHdrDate();
+
+/* ── calendar ──────────────────────────────────────── */
+let calView = 0;
+function renderCal(){
+  const base = new Date(today.getFullYear(), today.getMonth()+calView, 1);
+  const y = base.getFullYear(), m = base.getMonth();
+  $('cal-month').textContent = MONTHS[m];
+  $('cal-year').textContent = y;
+  const evDays = new Set(state.events
+    .map(e => new Date(e.date+'T00:00'))
+    .filter(d => d.getMonth()===m && d.getFullYear()===y)
+    .map(d => d.getDate()));
+  const start = (new Date(y,m,1).getDay()+6)%7;
+  const dim = new Date(y,m+1,0).getDate();
+  const prevDim = new Date(y,m,0).getDate();
+  let html='', cell=0;
+  for (let w=0; w<6; w++){
+    let row='<tr>';
+    for (let d=0; d<7; d++, cell++){
+      const n = cell-start+1;
+      if (n<1)        row += `<td class="dim">${prevDim+n}</td>`;
+      else if (n>dim) row += `<td class="dim">${n-dim}</td>`;
+      else {
+        const cls=[];
+        if (calView===0 && n===today.getDate()) cls.push('today');
+        if (evDays.has(n)) cls.push('has-evt');
+        row += `<td class="${cls.join(' ')}" data-day="${n}" title="click to add an event"><span>${n}</span></td>`;
+      }
+    }
+    html += row+'</tr>';
+    if (cell-start+1>dim) break;
+  }
+  $('cal-body').innerHTML = html;
+  document.querySelectorAll('#cal-body td[data-day]').forEach(td =>
+    td.addEventListener('click', () =>
+      openDay(`${y}-${pad(m+1)}-${pad(+td.dataset.day)}`)));
+}
+$('cal-prev').addEventListener('click', () => { calView--; renderCal(); });
+$('cal-next').addEventListener('click', () => { calView++; renderCal(); });
+$('cal-month').addEventListener('click', () => { calView = 0; renderCal(); });
+
+/* ── next event helpers ────────────────────────────── */
+function upcoming(){
+  const now = new Date();
+  return state.events
+    .map(e => ({...e, dt: new Date(e.date+'T'+e.t)}))
+    .filter(e => e.dt >= now)
+    .sort((a,b) => a.dt-b.dt)[0] || null;
+}
+
+/* ── home cards ────────────────────────────────────── */
+function renderHomeCards(){
+  /* art */
+  if ($('art-home').getAttribute('src') !== state.artImg) $('art-home').src = state.artImg;
+
+  /* header: date + dot-matrix next event */
+  $('today-date').textContent = DAYS[today.getDay()].toLowerCase()+' '+fmtDay(iso(today));
+  const nx = upcoming();
+  $('dm-1').textContent = nx ? fmt12(nx.t).replace(' ','').toUpperCase() : '--:--';
+  $('dm-2').textContent = (nx ? nx.name : 'all clear').toUpperCase().slice(0,12);
+
+  /* today's events */
+  const now = new Date();
+  const evts = state.events
+    .filter(e => e.date === iso(today))
+    .sort((a,b) => a.t.localeCompare(b.t));
+  let marked = false;
+  $('today-evts').innerHTML = evts.length
+    ? evts.map(e => {
+        const isNext = !marked && new Date(e.date+'T'+e.t) >= now && (marked = true);
+        return `<div class="trow${isNext ? ' next' : ''}">
+          <span class="when">${fmt12(e.t)}</span><span class="nm">${esc(e.name)}</span>
+        </div>`;
+      }).join('')
+    : '<div class="empty-line">a quiet day.</div>';
+  if (nx){
+    const mins = Math.max(0, Math.round((nx.dt - now)/60000));
+    const rel = mins < 60 ? mins+' min' : mins < 1440 ? Math.round(mins/60)+' hr' : Math.round(mins/1440)+' days';
+    $('today-count').textContent = `next: ${nx.name} in ${rel}`;
+  } else $('today-count').textContent = '';
+
+  /* appointments (under the calendar) */
+  const startOfDay = new Date(); startOfDay.setHours(0,0,0,0);
+  const appts = state.events
+    .map(e => ({...e, dt:new Date(e.date+'T'+e.t)}))
+    .filter(e => e.dt >= startOfDay)
+    .sort((a,b) => a.dt-b.dt).slice(0,4);
+  $('cal-appts').innerHTML = appts.length
+    ? appts.map(e => `<div class="trow">
+        <span class="when">${e.date===iso(today)?'today':fmtDay(e.date)}</span>
+        <span class="nm" style="flex:1">${esc(e.name)}</span>
+        <span class="when" style="min-width:0">${fmt12(e.t)}</span>
+      </div>`).join('')
+    : '<div class="empty-line">none upcoming.</div>';
+
+  /* today's tasks (dated today or undated) */
+  const items = state.tasks
+    .map((t,i) => ({...t, i}))
+    .filter(t => !t.date || t.date === iso(today))
+    .sort((a,b) => a.done - b.done);
+  $('today-tasks').innerHTML = items.length
+    ? items.map(t => `<div class="t-row${t.done ? ' done' : ''}" data-i="${t.i}">
+        <span class="bx">[${t.done ? 'x' : ' '}]</span>
+        <span class="tx">${esc(t.text)}</span>
+        <span class="task-x" data-del="1" title="remove">&times;</span>
+      </div>`).join('')
+    : '<div class="empty-line">nothing yet — add one below.</div>';
+  $('today-tasks').querySelectorAll('.t-row').forEach(el =>
+    el.addEventListener('click', ev => {
+      const i = +el.dataset.i;
+      if (ev.target.dataset.del) state.tasks.splice(i,1);
+      else state.tasks[i].done = !state.tasks[i].done;
+      save(); renderAll();
+    }));
+
+  /* diary preview */
+  const noteToday = state.notes[iso(today)];
+  $('diary-home').innerHTML = `<span class="dp-date">diary</span>` +
+    (noteToday ? esc(noteToday.slice(0,170)).replace(/\n/g,' ') : '<i>no entry yet — click to write about today&hellip;</i>');
+
+  /* year progress · week · moon (clock card) */
+  const ys = new Date(today.getFullYear(), 0, 1);
+  const doy = Math.floor((today - ys)/86400000) + 1;
+  const yTotal = Math.round((new Date(today.getFullYear()+1,0,1) - ys)/86400000);
+  const yW = 12, yOn = Math.round(doy/yTotal*yW);
+  $('year-line').innerHTML =
+    `${today.getFullYear()} ${'▓'.repeat(yOn)}<span class="off">${'░'.repeat(yW-yOn)}</span> ${Math.round(doy/yTotal*100)}%`;
+  const ph = (((today - new Date('2000-01-06T18:14:00Z'))/86400000) % 29.53059) / 29.53059;
+  const moon = ph<.03||ph>.97 ? '● new moon' : ph<.25 ? '◐ waxing' : ph<.28 ? '◐ first quarter'
+    : ph<.47 ? '◐ gibbous' : ph<.53 ? '○ full moon' : ph<.75 ? '◑ waning' : '◑ crescent';
+  $('week-line').textContent = `week ${Math.ceil(doy/7)} · ${moon}`;
+
+  /* mini goals */
+  const W=16;
+  $('mini-goals').innerHTML = state.goals.slice(0,3).map(g => {
+    const on = Math.round(g.pct/100*W);
+    return `<div class="mini-goal">
+      <div class="gtop"><span>${esc(g.name)}</span><span class="gpct">${g.pct}%</span></div>
+      <div class="mini-bar">${'▓'.repeat(on)}<span class="off">${'░'.repeat(W-on)}</span></div>
+    </div>`;
+  }).join('');
+  const avg = state.goals.length ? Math.round(state.goals.reduce((s,g)=>s+g.pct,0)/state.goals.length) : 0;
+  $('goals-avg').textContent = state.goals.length ? `average ${avg}% across ${state.goals.length} goals` : 'no goals yet — click to add';
+}
+
+/* ── clock ─────────────────────────────────────────── */
+(function buildTicks(){
+  let t='';
+  for (let i=0;i<12;i++){
+    const a=i*Math.PI/6;
+    const x1=37+30*Math.sin(a), y1=37-30*Math.cos(a);
+    const x2=37+33*Math.sin(a), y2=37-33*Math.cos(a);
+    t+=`<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}"/>`;
+  }
+  $('ticks').innerHTML=t;
+})();
+function tickClock(){
+  const n = new Date();
+  const h=n.getHours(), m=n.getMinutes(), s=n.getSeconds();
+  $('h-hand').setAttribute('transform',`rotate(${(h%12)*30+m*0.5} 37 37)`);
+  $('m-hand').setAttribute('transform',`rotate(${m*6+s*0.1} 37 37)`);
+  $('s-hand').setAttribute('transform',`rotate(${s*6} 37 37)`);
+  $('clock-digits').textContent =
+    ((h%12)||12)+':'+pad(m)+':'+pad(s)+' '+(h<12?'am':'pm');
+}
+setInterval(tickClock, 1000); tickClock();
+setInterval(() => {
+  const n = new Date();
+  if (iso(n) !== iso(today)){            // midnight rollover — stay current forever
+    today = n; calView = 0;
+    renderHdrDate(); renderAll();
+  }
+  if (view==='home') renderHomeCards();
+  renderFoot();
+}, 30000);
+
+/* ── tasks page ────────────────────────────────────── */
+function renderTasks(){
+  const open = state.tasks.filter(t=>!t.done).length;
+  $('tasks-sub').textContent = `${open} open · ${state.tasks.length - open} done`;
+  $('task-list').innerHTML = state.tasks.map((t,i) =>
+    `<div class="task${t.done?' done':''}" data-i="${i}">
+      <span class="task-box">[${t.done?'x':' '}]</span>
+      <span class="task-text">${esc(t.text)}${t.date?`<span class="evt-tag">${t.date===iso(today)?'today':fmtDay(t.date)}</span>`:''}</span>
+      <span class="task-x" title="remove">&times;</span>
+    </div>`).join('');
+  document.querySelectorAll('#task-list .task').forEach(el =>
+    el.addEventListener('click', ev => {
+      const i = +el.dataset.i;
+      if (ev.target.classList.contains('task-x')) state.tasks.splice(i,1);
+      else state.tasks[i].done = !state.tasks[i].done;
+      save(); renderAll();
+    }));
+}
+$('task-input').addEventListener('keydown', e => {
+  if (e.key==='Enter' && e.target.value.trim()){
+    state.tasks.push({text:e.target.value.trim(), done:false});
+    e.target.value=''; save(); renderAll();
+  }
+});
+
+/* ── goals page ────────────────────────────────────── */
+function renderGoals(){
+  const W = 26;
+  $('goal-list').innerHTML = state.goals.map((g,i) => {
+    const on = Math.round(g.pct/100*W);
+    return `<div class="goal" data-i="${i}">
+      <div class="goal-top">
+        <span>${esc(g.name)}<span class="task-x" title="remove" data-del="${i}" style="margin-left:8px">&times;</span></span>
+        <span class="goal-ctl">
+          <button class="goal-btn" data-d="-5" data-i="${i}">&minus;</button>
+          <button class="goal-btn" data-d="5" data-i="${i}">+</button>
+          <span class="goal-pct">${g.pct}%</span>
+        </span>
+      </div>
+      <div class="goal-bar">${'▓'.repeat(on)}<span class="off">${'░'.repeat(W-on)}</span></div>
+    </div>`;
+  }).join('');
+  document.querySelectorAll('.goal-btn').forEach(b =>
+    b.addEventListener('click', () => {
+      const g = state.goals[+b.dataset.i];
+      g.pct = Math.max(0, Math.min(100, g.pct + +b.dataset.d));
+      save(); renderGoals();
+    }));
+  document.querySelectorAll('#goal-list [data-del]').forEach(x =>
+    x.addEventListener('click', () => {
+      state.goals.splice(+x.dataset.del,1); save(); renderAll();
+    }));
+}
+$('goal-input').addEventListener('keydown', e => {
+  if (e.key==='Enter' && e.target.value.trim()){
+    state.goals.push({name:e.target.value.trim(), pct:0});
+    e.target.value=''; save(); renderAll();
+  }
+});
+
+/* ── events page ───────────────────────────────────── */
+function renderEvents(){
+  const sorted = state.events
+    .map((e,i) => ({...e, i}))
+    .sort((a,b) => (a.date+a.t).localeCompare(b.date+b.t));
+  $('evt-list').innerHTML = sorted.map(e => {
+    const d = new Date(e.date+'T00:00');
+    const isToday = e.date === iso(today);
+    const when = (isToday ? 'today' : DAYS[d.getDay()]+' '+MONTHS[d.getMonth()].slice(0,3).toLowerCase()+' '+d.getDate()) + ' ' + fmt12(e.t);
+    return `<div class="evt" data-i="${e.i}">
+      <span class="evt-when">${when}</span>
+      <span class="evt-name">${esc(e.name)}${e.tag?`<span class="evt-tag">${esc(e.tag)}</span>`:''}</span>
+      <span class="task-x" title="remove">&times;</span>
+    </div>`;
+  }).join('');
+  document.querySelectorAll('#evt-list .task-x').forEach(x =>
+    x.addEventListener('click', () => {
+      state.events.splice(+x.closest('.evt').dataset.i,1); save(); renderAll();
+    }));
+}
+$('evt-name').addEventListener('keydown', e => {
+  if (e.key!=='Enter' || !e.target.value.trim()) return;
+  const date = $('evt-date').value || iso(today);
+  const t = $('evt-time').value || '09:00';
+  const name = e.target.value.trim();
+  state.events.push({date, t, name, tag:''});
+  e.target.value='';
+  save(); renderAll();
+  toast('event added', `${date} · ${fmt12(t)}`);
+});
+
+/* ── day modal (click a calendar day) ──────────────── */
+const PRESETS = ['09:00','12:00','13:30','15:00','18:00','20:00'];
+let modalDate = null;
+function openDay(date){
+  modalDate = date;
+  const d = new Date(date+'T00:00');
+  $('modal-date').textContent = DAYS[d.getDay()]+' '+MONTHS[d.getMonth()].slice(0,3)+' '+d.getDate();
+  const dayEvts = state.events
+    .map((e,i)=>({...e,i}))
+    .filter(e => e.date===date)
+    .sort((a,b)=>a.t.localeCompare(b.t));
+  $('modal-day-events').innerHTML = dayEvts.length
+    ? dayEvts.map(e => `<div class="day-evt">
+        <span class="evt-when">${fmt12(e.t)}</span><span class="nm">${esc(e.name)}</span>
+        <span class="task-x" style="color:var(--muted)" data-i="${e.i}" title="remove">&times;</span>
+      </div>`).join('')
+    : '<div class="day-empty">nothing yet.</div>';
+  $('modal-day-events').querySelectorAll('[data-i]').forEach(x =>
+    x.addEventListener('click', () => {
+      state.events.splice(+x.dataset.i,1); save(); renderAll(); openDay(date);
+    }));
+  $('time-chips').innerHTML =
+    PRESETS.map(t => `<button class="chip" data-t="${t}">${fmt12(t)}</button>`).join('') +
+    `<input type="time" id="modal-time" value="09:00" title="or pick any time">`;
+  const sync = t => {
+    $('modal-time').value = t;
+    document.querySelectorAll('.chip').forEach(c => c.classList.toggle('sel', c.dataset.t===t));
+  };
+  document.querySelectorAll('.chip').forEach(c =>
+    c.addEventListener('click', () => sync(c.dataset.t)));
+  $('modal-time').addEventListener('input', e => sync(e.target.value));
+  sync('09:00');
+  renderModalTasks(date);
+  $('modal-task-input').value = '';
+  $('modal-name').value = '';
+  $('overlay').hidden = false;
+  setTimeout(() => $('modal-name').focus(), 50);
+}
+function closeDay(){ $('overlay').hidden = true; modalDate = null; }
+function saveDayEvent(){
+  const name = $('modal-name').value.trim();
+  if (!name || !modalDate) { $('modal-name').focus(); return; }
+  const t = $('modal-time').value || '09:00';
+  state.events.push({date:modalDate, t, name, tag:''});
+  save(); renderAll();
+  toast('event added', `${fmt12(t)} · ${name}`);
+  closeDay();
+}
+$('modal-save').addEventListener('click', saveDayEvent);
+$('modal-name').addEventListener('keydown', e => { if (e.key==='Enter') saveDayEvent(); });
+$('modal-close').addEventListener('click', closeDay);
+$('overlay').addEventListener('click', e => { if (e.target===$('overlay')) closeDay(); });
+document.addEventListener('keydown', e => { if (e.key==='Escape') closeDay(); });
+
+/* ── day tasks (inside the day modal) ──────────────── */
+function renderModalTasks(date){
+  const items = state.tasks.map((t,i)=>({...t,i})).filter(t=>t.date===date);
+  $('modal-day-tasks').innerHTML = items.length
+    ? items.map(t => `<div class="day-evt day-task" data-i="${t.i}" style="cursor:pointer">
+        <span class="evt-when" style="min-width:26px;font-family:'VT323',monospace">[${t.done?'x':' '}]</span>
+        <span class="nm"${t.done?' style="text-decoration:line-through;color:var(--done)"':''}>${esc(t.text)}</span>
+        <span class="task-x" style="color:var(--muted)" data-del="1" title="remove">&times;</span>
+      </div>`).join('')
+    : '<div class="day-empty">none yet.</div>';
+  $('modal-day-tasks').querySelectorAll('.day-task').forEach(el =>
+    el.addEventListener('click', ev => {
+      const i = +el.dataset.i;
+      if (ev.target.dataset.del) state.tasks.splice(i,1);
+      else state.tasks[i].done = !state.tasks[i].done;
+      save(); renderAll(); renderModalTasks(date);
+    }));
+}
+$('modal-task-input').addEventListener('keydown', e => {
+  if (e.key!=='Enter' || !e.target.value.trim() || !modalDate) return;
+  state.tasks.push({text:e.target.value.trim(), done:false, date:modalDate});
+  e.target.value='';
+  save(); renderAll(); renderModalTasks(modalDate);
+});
+
+/* ── diary ─────────────────────────────────────────── */
+let diaryDate = iso(today);
+function diaryCount(){ return Object.keys(state.notes).filter(k => (state.notes[k]||'').trim()).length; }
+function loadDiary(){
+  $('diary-date').textContent = (diaryDate===iso(today) ? 'today — ' : '') + fmtLong(diaryDate).toLowerCase();
+  $('diary-text').value = state.notes[diaryDate] || '';
+  const n = diaryCount();
+  $('diary-sub').textContent = n + ' ' + (n===1 ? 'entry' : 'entries');
+}
+function renderDiary(){ if (document.activeElement !== $('diary-text')) loadDiary(); }
+function shiftDiary(n){ const d = new Date(diaryDate+'T00:00'); d.setDate(d.getDate()+n); diaryDate = iso(d); loadDiary(); }
+function openDiaryToday(){
+  diaryDate = iso(today); go('diary'); loadDiary();
+  setTimeout(() => $('diary-text').focus(), 50);
+}
+$('diary-prev').addEventListener('click', () => shiftDiary(-1));
+$('diary-next').addEventListener('click', () => shiftDiary(1));
+$('diary-today').addEventListener('click', () => { diaryDate = iso(today); loadDiary(); });
+$('diary-text').addEventListener('input', e => {
+  const v = e.target.value;
+  if (v.trim()) state.notes[diaryDate] = v; else delete state.notes[diaryDate];
+  save();
+  const n = diaryCount();
+  $('diary-sub').textContent = n + ' ' + (n===1 ? 'entry' : 'entries');
+});
+
+/* ── notifications ─────────────────────────────────── */
+function toast(title, body){
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.innerHTML = `<div class="tt">${esc(title)}</div>${body?`<div class="tb">${esc(body)}</div>`:''}`;
+  $('toasts').appendChild(el);
+  setTimeout(() => el.remove(), 6000);
+}
+function applyBell(){
+  $('bell-toggle').textContent = state.notify ? 'alerts on' : 'alerts off';
+  $('bell-toggle').style.color = state.notify ? 'var(--amber)' : '';
+  $('bell-toggle').style.borderColor = state.notify ? 'var(--amber)' : '';
+}
+$('bell-toggle').addEventListener('click', async () => {
+  if (!state.notify){
+    if (typeof Notification !== 'undefined' && Notification.permission === 'default'){
+      try { await Notification.requestPermission(); } catch(e){}
+    }
+    state.notify = true;
+    toast('alerts on', 'you’ll be pinged 10 min before events');
+  } else {
+    state.notify = false;
+    toast('alerts off', '');
+  }
+  save(); applyBell();
+});
+function fireAlert(title, body){
+  toast(title, body);
+  if (typeof Notification !== 'undefined' && Notification.permission === 'granted'){
+    try { new Notification('Desk — '+title, {body}); } catch(e){}
+  }
+}
+function checkAlerts(){
+  if (!state.notify) return;
+  const now = Date.now();
+  let dirty = false;
+  state.events.forEach(e => {
+    const dt = new Date(e.date+'T'+e.t).getTime();
+    const mins = (dt - now) / 60000;
+    const k = e.date+e.t+e.name;
+    if (mins > 0 && mins <= 10 && !state.notified[k+':pre']){
+      state.notified[k+':pre'] = 1; dirty = true;
+      fireAlert(`${e.name} in ${Math.ceil(mins)} min`, fmt12(e.t));
+    } else if (mins <= 0 && mins > -5 && !state.notified[k+':now']){
+      state.notified[k+':now'] = 1; dirty = true;
+      fireAlert(`${e.name} — starting now`, fmt12(e.t));
+    }
+  });
+  if (dirty) save();
+}
+setInterval(checkAlerts, 30000);
+checkAlerts();
+
+/* ── art page (image upload) ───────────────────────── */
+function renderArt(){
+  if ($('art-preview').getAttribute('src') !== state.artImg) $('art-preview').src = state.artImg;
+}
+function setArt(dataUrl, marksLight){
+  state.artImg = dataUrl;
+  state.artMarksLight = marksLight;
+  try { save(); } catch(e){}
+  renderArt(); renderHomeCards(); syncArtInvert();
+  toast('art updated', 'looking good');
+}
+/* sniff polarity: are the visible marks light or dark? */
+function sniffMarksLight(ctx, w, h){
+  const px = ctx.getImageData(0, 0, w, h).data;
+  let lumA = 0, aSum = 0, lumAll = 0, n = 0;
+  for (let i = 0; i < px.length; i += 16){   // sample every 4th pixel
+    const lum = (0.2126*px[i] + 0.7152*px[i+1] + 0.0722*px[i+2]) / 255;
+    const a = px[i+3] / 255;
+    lumA += lum * a; aSum += a; lumAll += lum; n++;
+  }
+  const transparent = aSum / n < 0.6;
+  return transparent
+    ? (aSum ? lumA / aSum : 1) > 0.5        // backgroundless: judge the marks themselves
+    : (lumAll / n) < 0.5;                   // opaque: dark canvas implies light marks
+}
+function loadArtFile(f){
+  if (!f || !f.type.startsWith('image/')) return;
+  const img = new Image();
+  img.onload = () => {
+    const MAX = 800;
+    const scale = Math.min(1, MAX / Math.max(img.width, img.height));
+    const cv = document.createElement('canvas');
+    cv.width = Math.round(img.width * scale);
+    cv.height = Math.round(img.height * scale);
+    const ctx = cv.getContext('2d');
+    ctx.drawImage(img, 0, 0, cv.width, cv.height);
+    const marksLight = sniffMarksLight(ctx, cv.width, cv.height);
+    // png keeps line art + transparency crisp; jpeg for big photos
+    const out = (f.type === 'image/png' && f.size < 900000)
+      ? cv.toDataURL('image/png')
+      : cv.toDataURL('image/jpeg', 0.87);
+    URL.revokeObjectURL(img.src);
+    try {
+      setArt(out, marksLight);
+    } catch(e){
+      toast('image too large', 'try a smaller one');
+    }
+  };
+  img.src = URL.createObjectURL(f);
+}
+$('art-file').addEventListener('change', e => { loadArtFile(e.target.files[0]); e.target.value=''; });
+$('art-drop').addEventListener('click', () => $('art-file').click());
+$('art-drop').addEventListener('dragover', e => { e.preventDefault(); $('art-drop').classList.add('over'); });
+$('art-drop').addEventListener('dragleave', () => $('art-drop').classList.remove('over'));
+$('art-drop').addEventListener('drop', e => {
+  e.preventDefault(); $('art-drop').classList.remove('over');
+  loadArtFile(e.dataTransfer.files[0]);
+});
+document.addEventListener('paste', e => {
+  if (view !== 'art') return;
+  const item = [...(e.clipboardData?.items || [])].find(i => i.type.startsWith('image/'));
+  if (item) loadArtFile(item.getAsFile());
+});
+$('art-reset').addEventListener('click', () => {
+  state.artImg = DEFAULT_ART_IMG; state.artMarksLight = true;
+  save(); renderArt(); renderHomeCards(); syncArtInvert();
+  toast('art reset', 'back to the burst');
+});
+
+/* ── footer ────────────────────────────────────────── */
+const FOOT_HINTS = ['keys: h t g e a n · d = dark', 'dedicated to getting things done'];
+let footFlip = 0;
+function renderFoot(){
+  const open = state.tasks.filter(t=>!t.done).length;
+  const nx = upcoming();
+  const status = `${open} task${open===1?'':'s'} open` + (nx ? ` · next: ${nx.name} ${fmt12(nx.t)}` : '');
+  $('foot-status').textContent = footFlip%2===0 ? status : FOOT_HINTS[(footFlip>>1)%FOOT_HINTS.length];
+}
+setInterval(() => { footFlip++; renderFoot(); }, 8000);
+
+function renderAll(){ renderCal(); renderHomeCards(); renderTasks(); renderGoals(); renderEvents(); renderArt(); renderDiary(); renderFoot(); }
+$('evt-date').value = iso(today);
+$('today-task-input').addEventListener('keydown', e => {
+  if (e.key==='Enter' && e.target.value.trim()){
+    state.tasks.push({text:e.target.value.trim(), done:false, date:iso(today)});
+    e.target.value=''; save(); renderAll();
+  }
+});
+$('today-add-evt').addEventListener('click', () => openDay(iso(today)));
+
+/* embedded (Übersicht iframe) → drop outer chrome */
+if (window.self !== window.top){
+  document.body.style.padding = '0';
+  document.body.style.background = 'transparent';
+  document.documentElement.style.background = 'transparent';
+}
+
+/* wallpaper mode (Plash etc.) -> position the card on the desktop via URL hash:
+   #left  #right  #center (default) - add -top to pin high, e.g. #right-top */
+const hash = location.hash.slice(1) || (window.self === window.top ? 'right' : '');
+if (hash){
+  const [hPos, vPos] = hash.split('-');
+  document.body.style.justifyContent =
+    {left:'flex-start', right:'flex-end', center:'center'}[hPos] || 'center';
+  document.body.style.alignItems = vPos === 'top' ? 'flex-start' : 'center';
+  document.body.style.minHeight = '100vh';
+  document.body.style.padding = '48px';
+  /* true-widget mode: everything but the card is transparent, so your
+     wallpaper shows through and the card sits in its corner of the screen */
+  document.body.style.background = 'transparent';
+  document.documentElement.style.background = 'transparent';
+}
+
+applyMode(); applyBell(); renderAll();
+</script>
+</body>
+</html>
