@@ -36,3 +36,7 @@ No analytics, no external JS, no cookies. User content is HTML-escaped before re
 ## License
 
 MIT — see [LICENSE](LICENSE). Fonts are under the SIL Open Font License via Google Fonts.
+
+
+NOTE: your data lives only in localStorage. Clear it, or uninstall Plash, and the diary is gone.
+
