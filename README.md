@@ -15,7 +15,7 @@ A bento home grid with a clickable month calendar (click any day to add an event
 All data lives in your browser's localStorage. Nothing leaves your machine. The only network request is Google Fonts.
 
 
-### Easy download using plash
+### Easy download using plash MAC
 
 [Plash](https://apps.apple.com/app/plash/id1494023538) (free) pins a web page to your desktop, under all windows.
 
@@ -25,9 +25,18 @@ All data lives in your browser's localStorage. Nothing leaves your machine. The 
 
 Position it by adding a hash to the URL in Plash: `#left`, `#right`, `#center`, with `-top` variants (e.g. `#center-top`). Note: Plash's WebView cannot show native macOS notifications — use the app below if you want alert banners.
 
+## for windows
+Setup
+
+Download and install Lively Wallpaper
+Clone or download this repository
+Open Lively Wallpaper
+Click Add Wallpaper → select the project folder or index.html
+Set it as your wallpaper
+
 ## Files
 
- `index.html` is what Plash loads.
+ `index.html` is what Plash and lievely wallpaper loads.
 
 ## Privacy & security notes
 
