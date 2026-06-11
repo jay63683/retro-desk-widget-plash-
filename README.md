@@ -40,3 +40,13 @@ MIT — see [LICENSE](LICENSE). Fonts are under the SIL Open Font License via Go
 
 NOTE: your data lives only in localStorage. Clear it, or uninstall Plash, and the diary is gone.
 
+
+the image preview I personally use 
+
+## Image Credits The artwork featured in this project is by an artist found on pinterest.
+If you are the original creator or know who created this work, please open an issue so we can properly credit them. - from: https://ca.pinterest.com/pin/672232681924967722/
+instagram: @morowce
+…
+
+
+
