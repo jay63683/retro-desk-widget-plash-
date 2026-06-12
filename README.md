@@ -36,7 +36,7 @@ Set it as your wallpaper
 
 ## Files
 
- `index.html` is what Plash and lievely wallpaper loads.
+ `index.html` is what Plash and lievely wallpaper loads. The PNG in the repo is my personal image of choice and is the one seen in the screenshots, you can use this or use any you like althought I would suggest removing the background of the image before for a cleaner look.
 
 ## Privacy & security notes
 
